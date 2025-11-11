@@ -2,7 +2,7 @@
 
 namespace Proyecto_Analisis_de_crrimen.Controllers
 {
-    public class HomeController : Controller
+    public class EscenaCrimenController : Controller
     {
         public IActionResult Index()
         {
