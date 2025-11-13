@@ -1,25 +1,32 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System.Web.Mvc;
+using Proyecto_Analisis_de_crimen.Models;
+using System.Diagnostics;
 
 namespace Proyecto_Analisis_de_crimen.Controllers
 {
     public class HomeController : Controller
     {
-        public ActionResult Index()
+        private readonly ILogger<HomeController> _logger;
+
+        public HomeController(ILogger<HomeController> logger)
+        {
+            _logger = logger;
+        }
+
+        public IActionResult Index()
         {
             return View();
         }
 
-        public ActionResult About()
+        public IActionResult Privacy()
         {
-            ViewBag.Message = "Sistema de Análisis de Escenas del Crimen";
             return View();
         }
 
-        public ActionResult Contact()
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
         {
-            ViewBag.Message = "Contacto - Soporte Técnico";
-            return View();
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }
 }

@@ -1,5 +1,330 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model Proyecto_Analisis_de_crimen.Models.ComparacionResultado
+
 @{
+    ViewBag.Title = "Resultado de Comparación";
+    var badgeClass = Model.Clasificacion == Proyecto_Analisis_de_crimen.Models.ClasificacionCrimen.CrimenEnSerie ? "badge-danger" :
+                     Model.Clasificacion == Proyecto_Analisis_de_crimen.Models.ClasificacionCrimen.ConexionProbable ? "badge-warning" : "badge-secondary";
+
+    var clasificacionTexto = Model.Clasificacion == Proyecto_Analisis_de_crimen.Models.ClasificacionCrimen.CrimenEnSerie ? "CRIMEN EN SERIE" :
+                             Model.Clasificacion == Proyecto_Analisis_de_crimen.Models.ClasificacionCrimen.ConexionProbable ? "CONEXIÓN PROBABLE" : "SIMILITUD BAJA";
 }
+
+<div class="result-container">
+    <div class="result-header">
+        <h2>RESULTADO DEL ANÁLISIS COMPARATIVO</h2>
+    </div>
+
+    <div class="result-body">
+        <div class="similarity-panel">
+            <div class="similarity-score">
+                <div class="score-value">@Model.PorcentajeSimilitud.ToString("F2")%</div>
+                <div class="score-label">Índice de Similitud</div>
+            </div>
+            <div class="classification-badge @badgeClass">
+                @clasificacionTexto
+            </div>
+        </div>
+
+        <div class="scenes-comparison">
+            <div class="scene-detail">
+                <h4>ESCENA BASE</h4>
+                <table class="table table-bordered">
+                    <tr>
+                        <th>ID:</th>
+                        <td>@Model.EscenaBase.Id</td>
+                    </tr>
+                    <tr>
+                        <th>Fecha:</th>
+                        <td>@Model.EscenaBase.FechaCrimen.ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                    <tr>
+                        <th>Ubicación:</th>
+                        <td>@Model.EscenaBase.Ubicacion</td>
+                    </tr>
+                    <tr>
+                        <th>Tipo:</th>
+                        <td>@Model.EscenaBase.TipoCrimen</td>
+                    </tr>
+                    <tr>
+                        <th>Área:</th>
+                        <td>@Model.EscenaBase.AreaGeografica</td>
+                    </tr>
+                    <tr>
+                        <th>Modus Operandi:</th>
+                        <td>@Model.EscenaBase.ModusOperandi</td>
+                    </tr>
+                    <tr>
+                        <th>Horario:</th>
+                        <td>@Model.EscenaBase.HorarioCrimen</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="scene-detail">
+                <h4>ESCENA COMPARADA</h4>
+                <table class="table table-bordered">
+                    <tr>
+                        <th>ID:</th>
+                        <td>@Model.EscenaComparada.Id</td>
+                    </tr>
+                    <tr>
+                        <th>Fecha:</th>
+                        <td>@Model.EscenaComparada.FechaCrimen.ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                    <tr>
+                        <th>Ubicación:</th>
+                        <td>@Model.EscenaComparada.Ubicacion</td>
+                    </tr>
+                    <tr>
+                        <th>Tipo:</th>
+                        <td>@Model.EscenaComparada.TipoCrimen</td>
+                    </tr>
+                    <tr>
+                        <th>Área:</th>
+                        <td>@Model.EscenaComparada.AreaGeografica</td>
+                    </tr>
+                    <tr>
+                        <th>Modus Operandi:</th>
+                        <td>@Model.EscenaComparada.ModusOperandi</td>
+                    </tr>
+                    <tr>
+                        <th>Horario:</th>
+                        <td>@Model.EscenaComparada.HorarioCrimen</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="coincidences-panel">
+            <h4>COINCIDENCIAS DETECTADAS</h4>
+            @if (Model.Coincidencias.Any())
+            {
+                <ul class="coincidences-list">
+                    @foreach (var coincidencia in Model.Coincidencias)
+                    {
+                        <li>@coincidencia</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="no-coincidences">No se detectaron coincidencias significativas entre las escenas.</p>
+            }
+        </div>
+
+        <div class="actions-panel">
+            @Html.ActionLink("NUEVA COMPARACIÓN", "Comparar", null, new { @class = "btn btn-primary" })
+            @Html.ActionLink("VER TODAS LAS ESCENAS", "Index", null, new { @class = "btn btn-secondary" })
+        </div>
+    </div>
+</div>
+
+<style>
+    .result-container {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .result-header {
+        background: #1a3a52;
+        color: white;
+        padding: 20px;
+        border-bottom: 2px solid #2c5aa0;
+    }
+
+        .result-header h2 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+    .result-body {
+        padding: 30px;
+    }
+
+    .similarity-panel {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8f9fa;
+        border: 2px solid #2c5aa0;
+        border-radius: 4px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
+    .similarity-score {
+        text-align: center;
+    }
+
+    .score-value {
+        font-size: 3em;
+        font-weight: 700;
+        color: #1a3a52;
+        line-height: 1;
+    }
+
+    .score-label {
+        font-size: 1.1em;
+        color: #666;
+        margin-top: 5px;
+        font-weight: 600;
+    }
+
+    .classification-badge {
+        padding: 15px 30px;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 1.2em;
+        letter-spacing: 0.5px;
+        color: white;
+    }
+
+    .badge-danger {
+        background: #8b0000;
+    }
+
+    .badge-warning {
+        background: #2c5aa0;
+    }
+
+    .badge-secondary {
+        background: #6c757d;
+    }
+
+    .scenes-comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .scene-detail {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 20px;
+    }
+
+        .scene-detail h4 {
+            color: #1a3a52;
+            font-weight: 700;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #2c5aa0;
+            padding-bottom: 10px;
+        }
+
+        .scene-detail table {
+            margin: 0;
+            font-size: 0.95em;
+        }
+
+        .scene-detail th {
+            width: 40%;
+            background: #e9ecef;
+            font-weight: 600;
+            padding: 10px;
+        }
+
+        .scene-detail td {
+            padding: 10px;
+        }
+
+    .coincidences-panel {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: 4px;
+        padding: 20px;
+        margin-bottom: 25px;
+    }
+
+        .coincidences-panel h4 {
+            color: #0c5460;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+    .coincidences-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+        .coincidences-list li {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-left: 4px solid #2c5aa0;
+            color: #333;
+        }
+
+            .coincidences-list li:before {
+                content: "✓ ";
+                color: #2c5aa0;
+                font-weight: bold;
+                margin-right: 8px;
+            }
+
+    .no-coincidences {
+        color: #666;
+        font-style: italic;
+    }
+
+    .actions-panel {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+    }
+
+    .btn-primary {
+        background-color: #1a3a52;
+        border-color: #2c5aa0;
+        color: white;
+        padding: 12px 25px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin: 0 5px;
+    }
+
+        .btn-primary:hover {
+            background-color: #2c5aa0;
+            text-decoration: none;
+            color: white;
+        }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+        padding: 12px 25px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin: 0 5px;
+    }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            text-decoration: none;
+            color: white;
+        }
+
+    @@media (max-width: 768px) {
+        .scenes-comparison
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .similarity-panel {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    }
+</style>

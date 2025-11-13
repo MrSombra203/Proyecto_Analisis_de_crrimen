@@ -1,5 +1,259 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model Proyecto_Analisis_de_crimen.Models.EscenaCrimen
+
 @{
+    ViewBag.Title = "Registrar Escena";
 }
+
+<div class="form-container">
+    <div class="form-header">
+        <h2>REGISTRAR NUEVA ESCENA DEL CRIMEN</h2>
+    </div>
+
+    <form asp-action="Registrar" asp-controller="EscenaCrimen" method="post" class="form-horizontal">
+        <div class="form-body">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="form-group">
+                <label asp-for="FechaCrimen" class="control-label col-md-3"></label>
+                <div class="col-md-9">
+                    <input asp-for="FechaCrimen" type="datetime-local" class="form-control" />
+                    <span asp-validation-for="FechaCrimen" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Ubicacion" class="control-label col-md-3"></label>
+                <div class="col-md-9">
+                    <input asp-for="Ubicacion" class="form-control" placeholder="Calle, Número, Ciudad, Provincia" />
+                    <span asp-validation-for="Ubicacion" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="TipoCrimen" class="control-label col-md-3"></label>
+                <div class="col-md-9">
+                    <select asp-for="TipoCrimen" class="form-control" asp-items="Html.GetEnumSelectList<Proyecto_Analisis_de_crimen.Models.TipoCrimen>()">
+                        <option value="">--- Seleccionar ---</option>
+                    </select>
+                    <span asp-validation-for="TipoCrimen" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="AreaGeografica" class="control-label col-md-3"></label>
+                <div class="col-md-9">
+                    <select asp-for="AreaGeografica" class="form-control" asp-items="Html.GetEnumSelectList<Proyecto_Analisis_de_crimen.Models.AreaGeografica>()">
+                        <option value="">--- Seleccionar ---</option>
+                    </select>
+                    <span asp-validation-for="AreaGeografica" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="ModusOperandi" class="control-label col-md-3"></label>
+                <div class="col-md-9">
+                    <select asp-for="ModusOperandi" class="form-control" asp-items="Html.GetEnumSelectList<Proyecto_Analisis_de_crimen.Models.ModusOperandi>()">
+                        <option value="">--- Seleccionar ---</option>
+                    </select>
+                    <span asp-validation-for="ModusOperandi" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="HorarioCrimen" class="control-label col-md-3"></label>
+                <div class="col-md-9">
+                    <select asp-for="HorarioCrimen" class="form-control" asp-items="Html.GetEnumSelectList<Proyecto_Analisis_de_crimen.Models.HorarioCrimen>()">
+                        <option value="">--- Seleccionar ---</option>
+                    </select>
+                    <span asp-validation-for="HorarioCrimen" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label col-md-3">Tipo de Evidencia <span class="required">*</span></label>
+                <div class="col-md-9">
+                    <div class="checkbox-grid">
+                        @{
+                            var evidenciasList = new Dictionary<string, string>
+                            {
+                                { "VidrioRoto", "Vidrio Roto" },
+                                { "HuellasDactilares", "Huellas Dactilares" },
+                                { "Sangre", "Sangre" },
+                                { "Cabellos", "Cabellos" },
+                                { "Fibras", "Fibras" },
+                                { "ArmaFuego", "Arma de Fuego" }
+                            };
+                        }
+                        @foreach (var evidencia in Enum.GetValues(typeof(Proyecto_Analisis_de_crimen.Models.TipoEvidencia)))
+                        {
+                            var evidenciaStr = evidencia.ToString();
+                            var displayName = evidenciasList.ContainsKey(evidenciaStr) ? evidenciasList[evidenciaStr] : evidenciaStr;
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="evidencias" value="@evidencia" />
+                                @displayName
+                            </label>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="control-label col-md-3">Características Especiales</label>
+                <div class="col-md-9">
+                    <div class="checkbox-grid">
+                        <label class="checkbox-label">
+                            <input asp-for="UsoViolencia" type="checkbox" />
+                            Uso de Violencia
+                        </label>
+                        <label class="checkbox-label">
+                            <input asp-for="ActoPlanificado" type="checkbox" />
+                            Acto Planificado
+                        </label>
+                        <label class="checkbox-label">
+                            <input asp-for="MultiplesPerpetadores" type="checkbox" />
+                            Múltiples Perpetradores
+                        </label>
+                        <label class="checkbox-label">
+                            <input asp-for="AutoriaDesconocida" type="checkbox" />
+                            Autoría Desconocida
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="DescripcionDetallada" class="control-label col-md-3"></label>
+                <div class="col-md-9">
+                    <textarea asp-for="DescripcionDetallada" class="form-control" rows="5" placeholder="Detalle la situación, circunstancias y hallazgos iniciales..."></textarea>
+                    <span asp-validation-for="DescripcionDetallada" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-md-offset-3 col-md-9">
+                    <button type="submit" class="btn btn-primary">GUARDAR ESCENA</button>
+                    <a asp-action="Index" class="btn btn-secondary">CANCELAR</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<style>
+    .form-container {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .form-header {
+        background: #1a3a52;
+        color: white;
+        padding: 20px;
+        border-bottom: 2px solid #2c5aa0;
+    }
+
+        .form-header h2 {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+    .form-body {
+        padding: 30px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .control-label {
+        font-weight: 600;
+        color: #333;
+        letter-spacing: 0.2px;
+    }
+
+    .required {
+        color: #cc3333;
+    }
+
+    .form-control {
+        border: 1px solid #ccc;
+        border-radius: 2px;
+        padding: 10px;
+        font-size: 0.95em;
+    }
+
+        .form-control:focus {
+            border-color: #2c5aa0;
+            box-shadow: inset 0 0 0 1px #2c5aa0;
+            outline: none;
+        }
+
+    .checkbox-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        font-weight: normal;
+        cursor: pointer;
+        padding: 5px;
+    }
+
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+        }
+
+    .btn-primary {
+        background-color: #1a3a52;
+        border-color: #2c5aa0;
+        color: white;
+        padding: 10px 25px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+        .btn-primary:hover {
+            background-color: #2c5aa0;
+            border-color: #3a6bb5;
+        }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+        padding: 10px 25px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            text-decoration: none;
+            color: white;
+        }
+
+    .text-danger {
+        color: #cc3333;
+        font-size: 0.9em;
+        margin-top: 5px;
+        display: block;
+    }
+</style>

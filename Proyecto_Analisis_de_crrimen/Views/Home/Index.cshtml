@@ -1,8 +1,306 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewBag.Title = "Inicio";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="home-container">
+    <div class="hero-section">
+        <div class="hero-content">
+            <h1>SISTEMA DE ANÁLISIS DE ESCENAS DEL CRIMEN</h1>
+            <p class="hero-subtitle">Plataforma Integral para Detección de Patrones Criminales</p>
+            <div class="hero-buttons">
+                @Html.ActionLink("REGISTRAR ESCENA", "Registrar", "EscenaCrimen", null, new { @class = "btn btn-hero-primary" })
+                @Html.ActionLink("VER DASHBOARD", "Dashboard", "EscenaCrimen", null, new { @class = "btn btn-hero-secondary" })
+            </div>
+        </div>
+    </div>
+
+    <div class="features-section">
+        <h2>FUNCIONALIDADES PRINCIPALES</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📝</div>
+                <h3>Registro de Escenas</h3>
+                <p>Captura detallada de información de escenas del crimen con datos estructurados y estandarizados.</p>
+                @Html.ActionLink("REGISTRAR", "Registrar", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>Comparación Automática</h3>
+                <p>Algoritmos avanzados que detectan similitudes entre escenas basándose en múltiples criterios.</p>
+                @Html.ActionLink("COMPARAR", "Comparar", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Análisis de Patrones</h3>
+                <p>Identificación de crímenes en serie mediante análisis estadístico y detección de tendencias.</p>
+                @Html.ActionLink("VER ANÁLISIS", "Index", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📈</div>
+                <h3>Dashboard Estadístico</h3>
+                <p>Visualización en tiempo real de métricas operacionales y alertas del sistema.</p>
+                @Html.ActionLink("DASHBOARD", "Dashboard", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+            </div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="info-content">
+            <h2>SOBRE EL SISTEMA</h2>
+            <p>
+                Esta plataforma ha sido diseñada específicamente para fuerzas del orden, proporcionando
+                herramientas tecnológicas avanzadas para el análisis de escenas del crimen. El sistema
+                permite registrar, comparar y detectar patrones criminales de manera eficiente, facilitando
+                la identificación de crímenes en serie y mejorando los tiempos de respuesta investigativa.
+            </p>
+            <div class="info-stats">
+                <div class="info-stat">
+                    <div class="info-stat-icon">🎯</div>
+                    <div class="info-stat-text">
+                        <strong>Precisión</strong>
+                        <span>Algoritmo con 6 criterios de análisis</span>
+                    </div>
+                </div>
+                <div class="info-stat">
+                    <div class="info-stat-icon">⚡</div>
+                    <div class="info-stat-text">
+                        <strong>Rapidez</strong>
+                        <span>Comparaciones en tiempo real</span>
+                    </div>
+                </div>
+                <div class="info-stat">
+                    <div class="info-stat-icon">🔒</div>
+                    <div class="info-stat-text">
+                        <strong>Seguridad</strong>
+                        <span>Datos protegidos y encriptados</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+    .home-container {
+        margin-top: -20px;
+    }
+
+    .hero-section {
+        background: linear-gradient(135deg, #1a3a52 0%, #2c5aa0 100%);
+        color: white;
+        padding: 80px 20px;
+        text-align: center;
+        margin-bottom: 50px;
+    }
+
+    .hero-content h1 {
+        font-size: 2.5em;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin-bottom: 15px;
+    }
+
+    .hero-subtitle {
+        font-size: 1.2em;
+        opacity: 0.9;
+        margin-bottom: 30px;
+    }
+
+    .hero-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-hero-primary {
+        background: white;
+        color: #1a3a52;
+        padding: 15px 35px;
+        border-radius: 4px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+        .btn-hero-primary:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+    .btn-hero-secondary {
+        background: transparent;
+        color: white;
+        padding: 15px 35px;
+        border: 2px solid white;
+        border-radius: 4px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+        .btn-hero-secondary:hover {
+            background: white;
+            color: #1a3a52;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+    .features-section {
+        padding: 40px 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+        .features-section h2 {
+            text-align: center;
+            color: #1a3a52;
+            font-weight: 700;
+            font-size: 2em;
+            margin-bottom: 40px;
+            letter-spacing: 0.5px;
+        }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        margin-bottom: 50px;
+    }
+
+    .feature-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+    .feature-icon {
+        font-size: 3em;
+        margin-bottom: 15px;
+    }
+
+    .feature-card h3 {
+        color: #1a3a52;
+        font-weight: 700;
+        margin-bottom: 15px;
+        font-size: 1.3em;
+    }
+
+    .feature-card p {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+
+    .btn-feature {
+        background: #2c5aa0;
+        color: white;
+        padding: 10px 25px;
+        border-radius: 4px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+        font-size: 0.9em;
+    }
+
+        .btn-feature:hover {
+            background: #4a7bc8;
+            color: white;
+            text-decoration: none;
+        }
+
+    .info-section {
+        background: #f8f9fa;
+        padding: 60px 20px;
+        margin-top: 50px;
+    }
+
+    .info-content {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+        .info-content h2 {
+            color: #1a3a52;
+            font-weight: 700;
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .info-content p {
+            color: #555;
+            font-size: 1.1em;
+            line-height: 1.8;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+    .info-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+
+    .info-stat {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 20px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .info-stat-icon {
+        font-size: 2.5em;
+        flex-shrink: 0;
+    }
+
+    .info-stat-text strong {
+        display: block;
+        color: #1a3a52;
+        font-size: 1.2em;
+        margin-bottom: 5px;
+    }
+
+    .info-stat-text span {
+        color: #666;
+        font-size: 0.95em;
+    }
+    
+    @@media (max-width: 768px) {
+        .hero-content h1{
+        font-size: 1.8em;
+    }
+
+    .hero-subtitle {
+        font-size: 1em;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+
+ }
+</style>

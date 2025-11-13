@@ -1,36 +1,34 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using Proyecto_Analisis_de_crimen.Models;
 using Proyecto_Analisis_de_crimen.Services;
-using System;
-using System.Data.Entity;
-using System.Linq;
-using System.Web.Mvc;
 
 namespace Proyecto_Analisis_de_crimen.Controllers
 {
     public class EscenaCrimenController : Controller
     {
-        private ApplicationDbContext db = new ApplicationDbContext();
+        private readonly ApplicationDbContext _context;
         private readonly ComparacionService _comparacionService;
 
-        public EscenaCrimenController()
+        public EscenaCrimenController(ApplicationDbContext context, ComparacionService comparacionService)
         {
-            _comparacionService = new ComparacionService();
+            _context = context;
+            _comparacionService = comparacionService;
         }
 
         // GET: EscenaCrimen
-        public ActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var escenas = db.EscenasCrimen
+            var escenas = await _context.EscenasCrimen
                 .Include(e => e.Evidencias)
                 .OrderByDescending(e => e.FechaRegistro)
-                .ToList();
+                .ToListAsync();
             return View(escenas);
         }
 
         // GET: EscenaCrimen/Registrar
-        public ActionResult Registrar()
+        public IActionResult Registrar()
         {
             return View();
         }
@@ -38,34 +36,61 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         // POST: EscenaCrimen/Registrar
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Registrar(EscenaCrimen escena, string[] evidencias)
+        public async Task<IActionResult> Registrar(EscenaCrimen escena, string[] evidencias)
         {
+            // Asegurar que la colección de evidencias esté inicializada
+            if (escena.Evidencias == null)
+            {
+                escena.Evidencias = new List<Evidencia>();
+            }
+
+            // Validar campos requeridos manualmente si es necesario
+            if (string.IsNullOrWhiteSpace(escena.Ubicacion))
+            {
+                ModelState.AddModelError("Ubicacion", "La ubicación es obligatoria");
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // Establecer valores por defecto
                     escena.FechaRegistro = DateTime.Now;
-                    escena.UsuarioRegistro = User.Identity.Name ?? "Sistema";
+                    escena.UsuarioRegistro = User.Identity?.Name ?? "Sistema";
+                    
+                    // Limpiar evidencias existentes para evitar duplicados
+                    escena.Evidencias.Clear();
 
-                    if (evidencias != null)
+                    // Agregar evidencias seleccionadas
+                    if (evidencias != null && evidencias.Length > 0)
                     {
                         foreach (var evidenciaStr in evidencias)
                         {
-                            if (Enum.TryParse<TipoEvidencia>(evidenciaStr, out var tipoEvidencia))
+                            if (!string.IsNullOrWhiteSpace(evidenciaStr) && 
+                                Enum.TryParse<TipoEvidencia>(evidenciaStr, out var tipoEvidencia))
                             {
                                 escena.Evidencias.Add(new Evidencia
                                 {
-                                    TipoEvidencia = tipoEvidencia
+                                    TipoEvidencia = tipoEvidencia,
+                                    Descripcion = null
                                 });
                             }
                         }
                     }
 
-                    db.EscenasCrimen.Add(escena);
-                    db.SaveChanges();
+                    _context.EscenasCrimen.Add(escena);
+                    await _context.SaveChangesAsync();
 
                     TempData["Success"] = "Escena registrada exitosamente";
-                    return RedirectToAction("Index");
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateException dbEx)
+                {
+                    ModelState.AddModelError("", "Error al guardar en la base de datos: " + dbEx.Message);
+                    if (dbEx.InnerException != null)
+                    {
+                        ModelState.AddModelError("", "Detalles: " + dbEx.InnerException.Message);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -77,23 +102,32 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         }
 
         // GET: EscenaCrimen/Comparar
-        public ActionResult Comparar()
+        public async Task<IActionResult> Comparar()
         {
-            ViewBag.Escenas = new SelectList(db.EscenasCrimen.OrderByDescending(e => e.FechaRegistro), "Id", "Ubicacion");
+            ViewBag.Escenas = new SelectList(
+                await _context.EscenasCrimen.OrderByDescending(e => e.FechaRegistro).ToListAsync(),
+                "Id",
+                "Ubicacion"
+            );
             return View();
         }
 
         // POST: EscenaCrimen/RealizarComparacion
         [HttpPost]
-        public ActionResult RealizarComparacion(int escenaBaseId, int escenaComparadaId)
+        public async Task<IActionResult> RealizarComparacion(int escenaBaseId, int escenaComparadaId)
         {
-            var escenaBase = db.EscenasCrimen.Include(e => e.Evidencias).FirstOrDefault(e => e.Id == escenaBaseId);
-            var escenaComparada = db.EscenasCrimen.Include(e => e.Evidencias).FirstOrDefault(e => e.Id == escenaComparadaId);
+            var escenaBase = await _context.EscenasCrimen
+                .Include(e => e.Evidencias)
+                .FirstOrDefaultAsync(e => e.Id == escenaBaseId);
+
+            var escenaComparada = await _context.EscenasCrimen
+                .Include(e => e.Evidencias)
+                .FirstOrDefaultAsync(e => e.Id == escenaComparadaId);
 
             if (escenaBase == null || escenaComparada == null)
             {
                 TempData["Error"] = "Una o ambas escenas no fueron encontradas";
-                return RedirectToAction("Comparar");
+                return RedirectToAction(nameof(Comparar));
             }
 
             var resultado = _comparacionService.CompararEscenas(escenaBase, escenaComparada);
@@ -101,15 +135,18 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         }
 
         // GET: EscenaCrimen/Resultados/{id}
-        public ActionResult Resultados(int id)
+        public async Task<IActionResult> Resultados(int id)
         {
-            var escenaBase = db.EscenasCrimen.Include(e => e.Evidencias).FirstOrDefault(e => e.Id == id);
+            var escenaBase = await _context.EscenasCrimen
+                .Include(e => e.Evidencias)
+                .FirstOrDefaultAsync(e => e.Id == id);
+
             if (escenaBase == null)
             {
-                return HttpNotFound();
+                return NotFound();
             }
 
-            var todasLasEscenas = db.EscenasCrimen.Include(e => e.Evidencias).ToList();
+            var todasLasEscenas = await _context.EscenasCrimen.Include(e => e.Evidencias).ToListAsync();
             var resultados = _comparacionService.BuscarEscenasSimilares(escenaBase, todasLasEscenas);
 
             ViewBag.EscenaBase = escenaBase;
@@ -117,26 +154,20 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         }
 
         // GET: EscenaCrimen/Dashboard
-        public ActionResult Dashboard()
+        public async Task<IActionResult> Dashboard()
         {
-            var totalEscenas = db.EscenasCrimen.Count();
-            var todasLasEscenas = db.EscenasCrimen.Include(e => e.Evidencias).ToList();
+            var totalEscenas = await _context.EscenasCrimen.CountAsync();
+            var todasLasEscenas = await _context.EscenasCrimen.Include(e => e.Evidencias).ToListAsync();
             var crimenesEnSerie = _comparacionService.DetectarCrimenesEnSerie(todasLasEscenas);
 
             ViewBag.TotalEscenas = totalEscenas;
             ViewBag.CrimenesEnSerie = crimenesEnSerie.Count;
-            ViewBag.UltimasEscenas = db.EscenasCrimen.OrderByDescending(e => e.FechaRegistro).Take(5).ToList();
+            ViewBag.UltimasEscenas = await _context.EscenasCrimen
+                .OrderByDescending(e => e.FechaRegistro)
+                .Take(5)
+                .ToListAsync();
 
             return View();
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
         }
     }
 }

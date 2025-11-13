@@ -15,7 +15,7 @@ namespace Proyecto_Analisis_de_crimen.Models
         public TipoEvidencia TipoEvidencia { get; set; }
 
         [StringLength(500)]
-        public string Descripcion { get; set; }
+        public string? Descripcion { get; set; }
     }
 
     public enum TipoEvidencia

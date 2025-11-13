@@ -1,5 +1,4 @@
-﻿using Proyecto_Analisis_de_crrimen.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -37,7 +36,7 @@ namespace Proyecto_Analisis_de_crimen.Models
 
         [Display(Name = "Descripción Detallada")]
         [StringLength(2000)]
-        public string DescripcionDetallada { get; set; }
+        public string? DescripcionDetallada { get; set; }
 
         public virtual ICollection<Evidencia> Evidencias { get; set; }
 
@@ -50,7 +49,7 @@ namespace Proyecto_Analisis_de_crimen.Models
         public DateTime FechaRegistro { get; set; }
 
         [Display(Name = "Usuario Registro")]
-        public string UsuarioRegistro { get; set; }
+        public string? UsuarioRegistro { get; set; }
 
         public EscenaCrimen()
         {

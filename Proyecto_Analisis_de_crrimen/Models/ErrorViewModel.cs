@@ -1,4 +1,4 @@
-namespace Proyecto_Analisis_de_crrimen.Models
+namespace Proyecto_Analisis_de_crimen.Models
 {
     public class ErrorViewModel
     {
