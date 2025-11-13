@@ -30,12 +30,12 @@
             </div>
 
             <div class="form-group">
-                <label asp-for="TipoCrimen" class="control-label col-md-3"></label>
+                <label asp-for="TipoCrimenId" class="control-label col-md-3"></label>
                 <div class="col-md-9">
-                    <select asp-for="TipoCrimen" class="form-control" asp-items="Html.GetEnumSelectList<Proyecto_Analisis_de_crimen.Models.TipoCrimen>()">
-                        <option value="">--- Seleccionar ---</option>
+                    <select asp-for="TipoCrimenId" class="form-control" asp-items="ViewBag.TiposCrimen">
+                        <option value="">--- Seleccionar Tipo de Crimen ---</option>
                     </select>
-                    <span asp-validation-for="TipoCrimen" class="text-danger"></span>
+                    <span asp-validation-for="TipoCrimenId" class="text-danger"></span>
                 </div>
             </div>
 
@@ -50,12 +50,12 @@
             </div>
 
             <div class="form-group">
-                <label asp-for="ModusOperandi" class="control-label col-md-3"></label>
+                <label asp-for="ModusOperandiId" class="control-label col-md-3"></label>
                 <div class="col-md-9">
-                    <select asp-for="ModusOperandi" class="form-control" asp-items="Html.GetEnumSelectList<Proyecto_Analisis_de_crimen.Models.ModusOperandi>()">
-                        <option value="">--- Seleccionar ---</option>
+                    <select asp-for="ModusOperandiId" class="form-control" asp-items="ViewBag.ModusOperandi">
+                        <option value="">--- Seleccionar Modus Operandi ---</option>
                     </select>
-                    <span asp-validation-for="ModusOperandi" class="text-danger"></span>
+                    <span asp-validation-for="ModusOperandiId" class="text-danger"></span>
                 </div>
             </div>
 

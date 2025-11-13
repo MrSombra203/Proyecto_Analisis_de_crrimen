@@ -52,9 +52,9 @@
                         <td>@item.Id</td>
                         <td>@item.FechaCrimen.ToString("dd/MM/yyyy HH:mm")</td>
                         <td>@item.Ubicacion</td>
-                        <td>@item.TipoCrimen.ToString()</td>
+                        <td>@(item.TipoCrimen?.Nombre ?? "N/A")</td>
                         <td>@item.AreaGeografica.ToString()</td>
-                        <td>@item.ModusOperandi.ToString()</td>
+                        <td>@(item.ModusOperandi?.Nombre ?? "N/A")</td>
                         <td>@item.HorarioCrimen.ToString()</td>
                         <td>@(item.Evidencias != null ? item.Evidencias.Count : 0)</td>
                         <td>

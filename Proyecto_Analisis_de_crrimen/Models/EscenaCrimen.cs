@@ -20,7 +20,10 @@ namespace Proyecto_Analisis_de_crimen.Models
 
         [Required(ErrorMessage = "El tipo de crimen es obligatorio")]
         [Display(Name = "Tipo de Crimen")]
-        public TipoCrimen TipoCrimen { get; set; }
+        public int TipoCrimenId { get; set; }
+
+        [Display(Name = "Tipo de Crimen")]
+        public virtual TipoCrimen TipoCrimen { get; set; }
 
         [Required(ErrorMessage = "El área geográfica es obligatoria")]
         [Display(Name = "Área Geográfica")]
@@ -28,7 +31,10 @@ namespace Proyecto_Analisis_de_crimen.Models
 
         [Required(ErrorMessage = "El modus operandi es obligatorio")]
         [Display(Name = "Modus Operandi")]
-        public ModusOperandi ModusOperandi { get; set; }
+        public int ModusOperandiId { get; set; }
+
+        [Display(Name = "Modus Operandi")]
+        public virtual ModusOperandi ModusOperandi { get; set; }
 
         [Required(ErrorMessage = "El horario es obligatorio")]
         [Display(Name = "Horario del Crimen")]
@@ -58,18 +64,6 @@ namespace Proyecto_Analisis_de_crimen.Models
         }
     }
 
-    public enum TipoCrimen
-    {
-        [Display(Name = "Robo")]
-        Robo,
-        [Display(Name = "Asalto a Mano Armada")]
-        AsaltoManoArmada,
-        [Display(Name = "Homicidio")]
-        Homicidio,
-        [Display(Name = "Allanamiento")]
-        Allanamiento
-    }
-
     public enum AreaGeografica
     {
         Centro,
@@ -77,20 +71,6 @@ namespace Proyecto_Analisis_de_crimen.Models
         Sur,
         Este,
         Oeste
-    }
-
-    public enum ModusOperandi
-    {
-        [Display(Name = "Acceso por Ventana")]
-        AccesoVentana,
-        [Display(Name = "Acceso por Puerta")]
-        AccesoPuerta,
-        [Display(Name = "Escalada")]
-        Escalada,
-        [Display(Name = "Uso de Fuerza Bruta")]
-        FuerzaBruta,
-        [Display(Name = "Engaño/Coerción")]
-        EngañoCoercion
     }
 
     public enum HorarioCrimen

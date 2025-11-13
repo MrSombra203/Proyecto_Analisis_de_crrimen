@@ -19,7 +19,7 @@ namespace Proyecto_Analisis_de_crimen.Services
             double puntosMaximos = 0;
 
             puntosMaximos += 25;
-            if (escenaBase.TipoCrimen == escenaComparada.TipoCrimen)
+            if (escenaBase.TipoCrimenId == escenaComparada.TipoCrimenId)
             {
                 puntosTotales += 25;
                 resultado.Coincidencias.Add("Tipo de crimen coincidente");
@@ -33,7 +33,7 @@ namespace Proyecto_Analisis_de_crimen.Services
             }
 
             puntosMaximos += 25;
-            if (escenaBase.ModusOperandi == escenaComparada.ModusOperandi)
+            if (escenaBase.ModusOperandiId == escenaComparada.ModusOperandiId)
             {
                 puntosTotales += 25;
                 resultado.Coincidencias.Add("Modus operandi compatible");

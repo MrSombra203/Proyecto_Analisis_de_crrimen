@@ -22,15 +22,33 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         {
             var escenas = await _context.EscenasCrimen
                 .Include(e => e.Evidencias)
+                .Include(e => e.TipoCrimen)
+                .Include(e => e.ModusOperandi)
                 .OrderByDescending(e => e.FechaRegistro)
                 .ToListAsync();
             return View(escenas);
         }
 
         // GET: EscenaCrimen/Registrar
-        public IActionResult Registrar()
+        public async Task<IActionResult> Registrar()
         {
+            await CargarCatalogosEnViewBag();
             return View();
+        }
+
+        private async Task CargarCatalogosEnViewBag()
+        {
+            ViewBag.TiposCrimen = new SelectList(
+                await _context.TiposCrimen.Where(t => t.Activo).OrderBy(t => t.Nombre).ToListAsync(),
+                "Id",
+                "Nombre"
+            );
+
+            ViewBag.ModusOperandi = new SelectList(
+                await _context.ModusOperandi.Where(m => m.Activo).OrderBy(m => m.Nombre).ToListAsync(),
+                "Id",
+                "Nombre"
+            );
         }
 
         // POST: EscenaCrimen/Registrar
@@ -59,6 +77,10 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                     escena.UsuarioRegistro = User.Identity?.Name ?? "Sistema";
                     
                     // Limpiar evidencias existentes para evitar duplicados
+                    if (escena.Evidencias == null)
+                    {
+                        escena.Evidencias = new List<Evidencia>();
+                    }
                     escena.Evidencias.Clear();
 
                     // Agregar evidencias seleccionadas
@@ -98,17 +120,25 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 }
             }
 
+            await CargarCatalogosEnViewBag();
             return View(escena);
         }
 
         // GET: EscenaCrimen/Comparar
         public async Task<IActionResult> Comparar()
         {
-            ViewBag.Escenas = new SelectList(
-                await _context.EscenasCrimen.OrderByDescending(e => e.FechaRegistro).ToListAsync(),
-                "Id",
-                "Ubicacion"
-            );
+            var escenas = await _context.EscenasCrimen
+                .Include(e => e.TipoCrimen)
+                .OrderByDescending(e => e.FechaRegistro)
+                .ToListAsync();
+
+            var escenasList = escenas.Select(e => new
+            {
+                Id = e.Id,
+                DisplayText = $"{e.Ubicacion} - {e.TipoCrimen?.Nombre} ({e.FechaCrimen:dd/MM/yyyy})"
+            }).ToList();
+
+            ViewBag.Escenas = new SelectList(escenasList, "Id", "DisplayText");
             return View();
         }
 
@@ -118,10 +148,14 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         {
             var escenaBase = await _context.EscenasCrimen
                 .Include(e => e.Evidencias)
+                .Include(e => e.TipoCrimen)
+                .Include(e => e.ModusOperandi)
                 .FirstOrDefaultAsync(e => e.Id == escenaBaseId);
 
             var escenaComparada = await _context.EscenasCrimen
                 .Include(e => e.Evidencias)
+                .Include(e => e.TipoCrimen)
+                .Include(e => e.ModusOperandi)
                 .FirstOrDefaultAsync(e => e.Id == escenaComparadaId);
 
             if (escenaBase == null || escenaComparada == null)
@@ -139,6 +173,8 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         {
             var escenaBase = await _context.EscenasCrimen
                 .Include(e => e.Evidencias)
+                .Include(e => e.TipoCrimen)
+                .Include(e => e.ModusOperandi)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (escenaBase == null)
@@ -146,7 +182,11 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 return NotFound();
             }
 
-            var todasLasEscenas = await _context.EscenasCrimen.Include(e => e.Evidencias).ToListAsync();
+            var todasLasEscenas = await _context.EscenasCrimen
+                .Include(e => e.Evidencias)
+                .Include(e => e.TipoCrimen)
+                .Include(e => e.ModusOperandi)
+                .ToListAsync();
             var resultados = _comparacionService.BuscarEscenasSimilares(escenaBase, todasLasEscenas);
 
             ViewBag.EscenaBase = escenaBase;
@@ -157,12 +197,18 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         public async Task<IActionResult> Dashboard()
         {
             var totalEscenas = await _context.EscenasCrimen.CountAsync();
-            var todasLasEscenas = await _context.EscenasCrimen.Include(e => e.Evidencias).ToListAsync();
+            var todasLasEscenas = await _context.EscenasCrimen
+                .Include(e => e.Evidencias)
+                .Include(e => e.TipoCrimen)
+                .Include(e => e.ModusOperandi)
+                .ToListAsync();
             var crimenesEnSerie = _comparacionService.DetectarCrimenesEnSerie(todasLasEscenas);
 
             ViewBag.TotalEscenas = totalEscenas;
             ViewBag.CrimenesEnSerie = crimenesEnSerie.Count;
             ViewBag.UltimasEscenas = await _context.EscenasCrimen
+                .Include(e => e.TipoCrimen)
+                .Include(e => e.ModusOperandi)
                 .OrderByDescending(e => e.FechaRegistro)
                 .Take(5)
                 .ToListAsync();
