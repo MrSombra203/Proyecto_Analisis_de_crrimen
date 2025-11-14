@@ -1,0 +1,170 @@
+@{
+    ViewData["Title"] = "Iniciar Sesión";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h3 class="mb-0">🔐 INICIAR SESIÓN</h3>
+                <p class="mb-0 small">Sistema de Análisis de Escenas del Crimen</p>
+            </div>
+            <div class="card-body p-4">
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        ⚠️ @TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        ✅ @TempData["Success"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                <form asp-action="Login" method="post" id="loginForm">
+                    @Html.AntiForgeryToken()
+                    
+                    <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+
+                    <div class="mb-3">
+                        <label for="nombreUsuario" class="form-label fw-bold">
+                            👤 Nombre de Usuario
+                        </label>
+                        <input type="text" 
+                               class="form-control form-control-lg" 
+                               id="nombreUsuario" 
+                               name="nombreUsuario" 
+                               placeholder="Ingrese su nombre de usuario"
+                               required 
+                               autofocus 
+                               autocomplete="username" />
+                        <div class="form-text">Ingrese su nombre de usuario del sistema</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label fw-bold">
+                            🔑 Contraseña
+                        </label>
+                        <input type="password" 
+                               class="form-control form-control-lg" 
+                               id="password" 
+                               name="password" 
+                               placeholder="Ingrese su contraseña"
+                               required 
+                               autocomplete="current-password" />
+                        <div class="form-text">Ingrese su contraseña de acceso</div>
+                    </div>
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger">
+                            <h6 class="alert-heading">Errores de validación:</h6>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            🚀 Iniciar Sesión
+                        </button>
+                    </div>
+                </form>
+
+                <hr class="my-4" />
+
+                <div class="alert alert-info mb-0">
+                    <h6 class="alert-heading">
+                        ℹ️ Usuarios de Prueba:
+                    </h6>
+                    <div class="small">
+                        <strong>Administrador:</strong><br />
+                        <code>admin</code> / <code>Admin123!</code>
+                    </div>
+                    <hr class="my-2" />
+                    <div class="small">
+                        <strong>Usuario:</strong><br />
+                        <code>usuario1</code> / <code>User123!</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-3">
+            <small class="text-muted">
+                Sistema de Análisis de Escenas del Crimen &copy; @DateTime.Now.Year
+            </small>
+        </div>
+    </div>
+</div>
+
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .card-header {
+        border-bottom: none;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        transition: transform 0.2s;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .alert-info {
+        background-color: #e7f3ff;
+        border-color: #b3d9ff;
+    }
+
+    code {
+        background-color: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.9em;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        // Validación del formulario
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const nombreUsuario = document.getElementById('nombreUsuario').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!nombreUsuario || !password) {
+                e.preventDefault();
+                alert('Por favor, complete todos los campos');
+                return false;
+            }
+        });
+    </script>
+}

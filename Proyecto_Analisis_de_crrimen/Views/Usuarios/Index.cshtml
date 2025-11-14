@@ -1,0 +1,158 @@
+@model IEnumerable<Proyecto_Analisis_de_crimen.Models.Usuario>
+
+@{
+    ViewData["Title"] = "Gestión de Usuarios";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-3">
+                👥 Gestión de Usuarios
+            </h2>
+            <p class="text-muted">Administra los usuarios del sistema. Solo los administradores pueden acceder a esta sección.</p>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            ✅ @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ⚠️ @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <a asp-action="Crear" class="btn btn-primary">
+                ➕ Crear Nuevo Usuario
+            </a>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Lista de Usuarios</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre de Usuario</th>
+                            <th>Nombre Completo</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Fecha Creación</th>
+                            <th>Último Acceso</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.Id</td>
+                                    <td><strong>@item.NombreUsuario</strong></td>
+                                    <td>@item.NombreCompleto</td>
+                                    <td>@item.Email</td>
+                                    <td>
+                                        <span class="badge @(item.RolId == 1 ? "bg-danger" : "bg-info")">
+                                            @(item.Rol?.Nombre ?? "Sin rol")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        @if (item.Activo)
+                                        {
+                                            <span class="badge bg-success">Activo</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Inactivo</span>
+                                        }
+                                    </td>
+                                    <td>@item.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        @if (item.UltimoAcceso.HasValue)
+                                        {
+                                            @item.UltimoAcceso.Value.ToString("dd/MM/yyyy HH:mm")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Nunca</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Editar" asp-route-id="@item.Id" class="btn btn-sm btn-warning" title="Editar">
+                                                ✏️ Editar
+                                            </a>
+                                            <form asp-action="Desactivar" asp-route-id="@item.Id" method="post" style="display:inline;" onsubmit="return confirm('¿Estás seguro de que deseas @(item.Activo ? "desactivar" : "activar") este usuario?');">
+                                                @Html.AntiForgeryToken()
+                                                @if (item.Activo)
+                                                {
+                                                    <button type="submit" class="btn btn-sm btn-danger" title="Desactivar">
+                                                        🚫 Desactivar
+                                                    </button>
+                                                }
+                                                else
+                                                {
+                                                    <button type="submit" class="btn btn-sm btn-success" title="Activar">
+                                                        ✅ Activar
+                                                    </button>
+                                                }
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">
+                                    <p class="mb-0">No hay usuarios registrados en el sistema</p>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
+                ← Volver al Inicio
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .btn-group .btn {
+        margin-right: 5px;
+    }
+
+    .btn-group .btn:last-child {
+        margin-right: 0;
+    }
+</style>
+

@@ -15,6 +15,12 @@ namespace Proyecto_Analisis_de_crimen.Controllers
 
         public IActionResult Index()
         {
+            // Si el usuario está autenticado, redirigir al dashboard
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId.HasValue)
+            {
+                return RedirectToAction("Dashboard", "EscenaCrimen");
+            }
             return View();
         }
 

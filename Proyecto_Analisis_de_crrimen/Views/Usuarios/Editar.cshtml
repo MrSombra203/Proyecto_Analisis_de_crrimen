@@ -1,0 +1,175 @@
+@model Proyecto_Analisis_de_crimen.Models.Usuario
+
+@{
+    ViewData["Title"] = "Editar Usuario";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="mb-3">
+                ✏️ Editar Usuario
+            </h2>
+            <p class="text-muted">Modifique la información del usuario. Deje la contraseña en blanco si no desea cambiarla.</p>
+        </div>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ⚠️ @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">Información del Usuario</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Editar" method="post" id="editarUsuarioForm">
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="FechaCreacion" />
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="NombreUsuario" class="form-label fw-bold">
+                                    👤 Nombre de Usuario <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="NombreUsuario" class="form-control" placeholder="Ingrese el nombre de usuario" />
+                                <span asp-validation-for="NombreUsuario" class="text-danger"></span>
+                                <div class="form-text">El nombre de usuario debe ser único</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Email" class="form-label fw-bold">
+                                    📧 Correo Electrónico <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Email" type="email" class="form-control" placeholder="usuario@ejemplo.com" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                                <div class="form-text">El email debe ser único y válido</div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="Password" class="form-label fw-bold">
+                                    🔑 Nueva Contraseña
+                                </label>
+                                <input asp-for="Password" type="password" class="form-control" placeholder="Dejar en blanco para no cambiar" />
+                                <span asp-validation-for="Password" class="text-danger"></span>
+                                <div class="form-text">Deje en blanco si no desea cambiar la contraseña. Mínimo 6 caracteres si se cambia.</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="NombreCompleto" class="form-label fw-bold">
+                                    👨‍💼 Nombre Completo <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="NombreCompleto" class="form-control" placeholder="Nombre completo del usuario" />
+                                <span asp-validation-for="NombreCompleto" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="RolId" class="form-label fw-bold">
+                                    🎭 Rol <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="RolId" class="form-select" asp-items="ViewBag.Roles">
+                                    <option value="">--- Seleccionar Rol ---</option>
+                                </select>
+                                <span asp-validation-for="RolId" class="text-danger"></span>
+                                <div class="form-text">Seleccione el rol del usuario</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Estado</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input asp-for="Activo" class="form-check-input" type="checkbox" />
+                                    <label class="form-check-label" for="Activo">
+                                        Usuario activo
+                                    </label>
+                                </div>
+                                <div class="form-text">Los usuarios inactivos no pueden iniciar sesión</div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <strong>ℹ️ Información:</strong>
+                            <ul class="mb-0">
+                                <li>ID del Usuario: <strong>@Model.Id</strong></li>
+                                <li>Fecha de Creación: <strong>@Model.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</strong></li>
+                                @if (Model.UltimoAcceso.HasValue)
+                                {
+                                    <li>Último Acceso: <strong>@Model.UltimoAcceso.Value.ToString("dd/MM/yyyy HH:mm")</strong></li>
+                                }
+                                else
+                                {
+                                    <li>Último Acceso: <strong class="text-muted">Nunca</strong></li>
+                                }
+                            </ul>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <a asp-action="Index" class="btn btn-secondary">
+                                        ❌ Cancelar
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        💾 Guardar Cambios
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        document.getElementById('editarUsuarioForm').addEventListener('submit', function(e) {
+            const password = document.getElementById('Password').value;
+            
+            // Solo validar si se proporcionó una contraseña
+            if (password && password.length > 0 && password.length < 6) {
+                e.preventDefault();
+                alert('La contraseña debe tener al menos 6 caracteres');
+                return false;
+            }
+        });
+    </script>
+}
+
+<style>
+    .form-label {
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .text-danger {
+        font-size: 0.875em;
+    }
+
+    .alert-info {
+        background-color: #e7f3ff;
+        border-color: #b3d9ff;
+    }
+</style>
+

@@ -16,14 +16,14 @@ namespace Proyecto_Analisis_de_crimen.Models
         [Required(ErrorMessage = "La ubicación es obligatoria")]
         [StringLength(200)]
         [Display(Name = "Ubicación Geográfica")]
-        public string Ubicacion { get; set; }
+        public string Ubicacion { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "El tipo de crimen es obligatorio")]
         [Display(Name = "Tipo de Crimen")]
         public int TipoCrimenId { get; set; }
 
         [Display(Name = "Tipo de Crimen")]
-        public virtual TipoCrimen TipoCrimen { get; set; }
+        public virtual TipoCrimen? TipoCrimen { get; set; }
 
         [Required(ErrorMessage = "El área geográfica es obligatoria")]
         [Display(Name = "Área Geográfica")]
@@ -34,7 +34,7 @@ namespace Proyecto_Analisis_de_crimen.Models
         public int ModusOperandiId { get; set; }
 
         [Display(Name = "Modus Operandi")]
-        public virtual ModusOperandi ModusOperandi { get; set; }
+        public virtual ModusOperandi? ModusOperandi { get; set; }
 
         [Required(ErrorMessage = "El horario es obligatorio")]
         [Display(Name = "Horario del Crimen")]

@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Proyecto_Analisis_de_crimen.Models;
+using Proyecto_Analisis_de_crimen.Attributes;
 
 namespace Proyecto_Analisis_de_crimen.Controllers
 {
+    [RequireAdmin] // Solo administradores pueden gestionar catálogos
     public class CatalogosController : Controller
     {
         private readonly ApplicationDbContext _context;

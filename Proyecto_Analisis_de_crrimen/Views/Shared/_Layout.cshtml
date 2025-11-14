@@ -18,30 +18,79 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Inicio</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="EscenaCrimen" asp-action="Index">Escenas</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="EscenaCrimen" asp-action="Registrar">Registrar</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="EscenaCrimen" asp-action="Comparar">Comparar</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="EscenaCrimen" asp-action="Dashboard">Dashboard</a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="catalogosDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Catálogos
-                            </a>
-                            <ul class="dropdown-menu" aria-labelledby="catalogosDropdown">
-                                <li><a class="dropdown-item" asp-controller="Catalogos" asp-action="TiposCrimen">Tipos de Crimen</a></li>
-                                <li><a class="dropdown-item" asp-controller="Catalogos" asp-action="ModusOperandi">Modus Operandi</a></li>
-                            </ul>
-                        </li>
+                        @{
+                            var userId = Context.Session.GetInt32("UserId");
+                            var nombreUsuario = Context.Session.GetString("NombreUsuario");
+                            var nombreCompleto = Context.Session.GetString("NombreCompleto");
+                            var rolId = Context.Session.GetInt32("RolId");
+                            var rolNombre = Context.Session.GetString("RolNombre");
+                            var isAuthenticated = userId.HasValue;
+                            var isAdmin = rolId == 1;
+                        }
+                        
+                        @if (isAuthenticated)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Inicio</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="EscenaCrimen" asp-action="Index">Escenas</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="EscenaCrimen" asp-action="Registrar">Registrar</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="EscenaCrimen" asp-action="Comparar">Comparar</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="EscenaCrimen" asp-action="Dashboard">Dashboard</a>
+                            </li>
+                            
+                            @if (isAdmin)
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="catalogosDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Catálogos
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="catalogosDropdown">
+                                        <li><a class="dropdown-item" asp-controller="Catalogos" asp-action="TiposCrimen">Tipos de Crimen</a></li>
+                                        <li><a class="dropdown-item" asp-controller="Catalogos" asp-action="ModusOperandi">Modus Operandi</a></li>
+                                    </ul>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Usuarios" asp-action="Index">Usuarios</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="Diagnostico" asp-action="VerificarUsuarios">Diagnóstico</a>
+                                </li>
+                            }
+                            
+                            <li class="nav-item dropdown ms-auto">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    @(nombreCompleto ?? nombreUsuario ?? "Usuario")
+                                    <span class="badge bg-info ms-1">@rolNombre</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li><h6 class="dropdown-header">@nombreCompleto</h6></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form asp-controller="Auth" asp-action="Logout" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item">Cerrar Sesión</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Inicio</a>
+                            </li>
+                            <li class="nav-item ms-auto">
+                                <a class="nav-link" asp-area="" asp-controller="Auth" asp-action="Login">Iniciar Sesión</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>

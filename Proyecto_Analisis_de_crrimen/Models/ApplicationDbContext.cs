@@ -9,6 +9,8 @@ namespace Proyecto_Analisis_de_crimen.Models
         {
         }
 
+        public DbSet<Rol> Roles { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<TipoCrimen> TiposCrimen { get; set; }
         public DbSet<ModusOperandi> ModusOperandi { get; set; }
         public DbSet<EscenaCrimen> EscenasCrimen { get; set; }
@@ -17,6 +19,67 @@ namespace Proyecto_Analisis_de_crimen.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Configuración de la tabla Roles
+            modelBuilder.Entity<Rol>(entity =>
+            {
+                entity.ToTable("Roles");
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.Nombre)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.Descripcion)
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.FechaCreacion)
+                    .HasDefaultValueSql("GETDATE()");
+
+                // Índice
+                entity.HasIndex(e => e.Nombre).IsUnique();
+            });
+
+            // Configuración de la tabla Usuarios
+            modelBuilder.Entity<Usuario>(entity =>
+            {
+                entity.ToTable("Usuarios");
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.NombreUsuario)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.Email)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.Password)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.NombreCompleto)
+                    .IsRequired()
+                    .HasMaxLength(100);
+
+                entity.Property(e => e.Activo)
+                    .HasDefaultValue(true);
+
+                entity.Property(e => e.FechaCreacion)
+                    .HasDefaultValueSql("GETDATE()");
+
+                // Relación con Roles
+                entity.HasOne(e => e.Rol)
+                    .WithMany(r => r.Usuarios)
+                    .HasForeignKey(e => e.RolId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // Índices
+                entity.HasIndex(e => e.NombreUsuario).IsUnique();
+                entity.HasIndex(e => e.Email).IsUnique();
+                entity.HasIndex(e => e.RolId);
+                entity.HasIndex(e => e.Activo);
+            });
 
             // Configuración de la tabla TiposCrimen
             modelBuilder.Entity<TipoCrimen>(entity =>
@@ -84,6 +147,19 @@ namespace Proyecto_Analisis_de_crimen.Models
 
                 entity.Property(e => e.FechaRegistro)
                     .HasDefaultValueSql("GETDATE()");
+
+                // Valores por defecto para campos booleanos
+                entity.Property(e => e.UsoViolencia)
+                    .HasDefaultValue(false);
+
+                entity.Property(e => e.ActoPlanificado)
+                    .HasDefaultValue(false);
+
+                entity.Property(e => e.MultiplesPerpetadores)
+                    .HasDefaultValue(false);
+
+                entity.Property(e => e.AutoriaDesconocida)
+                    .HasDefaultValue(false);
 
                 // Relaciones con catálogos
                 entity.HasOne(e => e.TipoCrimen)

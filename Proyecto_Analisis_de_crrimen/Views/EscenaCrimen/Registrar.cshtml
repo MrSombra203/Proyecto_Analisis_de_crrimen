@@ -11,7 +11,14 @@
 
     <form asp-action="Registrar" asp-controller="EscenaCrimen" method="post" class="form-horizontal">
         <div class="form-body">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Error!</strong> @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+            <div asp-validation-summary="All" class="text-danger alert alert-danger"></div>
 
             <div class="form-group">
                 <label asp-for="FechaCrimen" class="control-label col-md-3"></label>
@@ -70,9 +77,9 @@
             </div>
 
             <div class="form-group">
-                <label class="control-label col-md-3">Tipo de Evidencia <span class="required">*</span></label>
+                <label class="control-label col-md-3">Evidencias Encontradas</label>
                 <div class="col-md-9">
-                    <div class="checkbox-grid">
+                    <div id="evidencias-container">
                         @{
                             var evidenciasList = new Dictionary<string, string>
                             {
@@ -84,16 +91,39 @@
                                 { "ArmaFuego", "Arma de Fuego" }
                             };
                         }
+                        @{
+                            int evidenciaIndex = 0;
+                        }
                         @foreach (var evidencia in Enum.GetValues(typeof(Proyecto_Analisis_de_crimen.Models.TipoEvidencia)))
                         {
                             var evidenciaStr = evidencia.ToString();
                             var displayName = evidenciasList.ContainsKey(evidenciaStr) ? evidenciasList[evidenciaStr] : evidenciaStr;
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="evidencias" value="@evidencia" />
-                                @displayName
-                            </label>
+                            var evidenciaId = $"evidencia_{evidencia}";
+                            <div class="evidencia-item mb-3 p-3 border rounded">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input evidencia-checkbox" type="checkbox" 
+                                           name="evidencias" value="@evidencia" 
+                                           id="@evidenciaId" 
+                                           data-evidencia="@evidencia"
+                                           data-index="@evidenciaIndex" />
+                                    <label class="form-check-label fw-bold" for="@evidenciaId">
+                                        @displayName
+                                    </label>
+                                </div>
+                                <div class="evidencia-descripcion" style="display: none;">
+                                    <label class="form-label small">Descripción (opcional):</label>
+                                    <input type="text" 
+                                           class="form-control form-control-sm evidencia-desc-input" 
+                                           name="evidenciasDescripciones" 
+                                           placeholder="Detalle de la evidencia..."
+                                           data-evidencia="@evidencia"
+                                           data-index="@evidenciaIndex" />
+                                </div>
+                            </div>
+                            evidenciaIndex++;
                         }
                     </div>
+                    <small class="form-text text-muted">Seleccione las evidencias encontradas y opcionalmente agregue una descripción</small>
                 </div>
             </div>
 
@@ -141,6 +171,69 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Mostrar/ocultar campos de descripción según el checkbox
+        document.addEventListener('DOMContentLoaded', function() {
+            const checkboxes = document.querySelectorAll('.evidencia-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const evidenciaItem = this.closest('.evidencia-item');
+                    const descripcionDiv = evidenciaItem.querySelector('.evidencia-descripcion');
+                    const descripcionInput = evidenciaItem.querySelector('input[name="evidenciasDescripciones"]');
+                    
+                    if (this.checked) {
+                        descripcionDiv.style.display = 'block';
+                    } else {
+                        descripcionDiv.style.display = 'none';
+                        if (descripcionInput) {
+                            descripcionInput.value = '';
+                        }
+                    }
+                });
+            });
+
+            // Validación del formulario
+            document.querySelector('form').addEventListener('submit', function(e) {
+                const fechaCrimen = document.querySelector('input[name="FechaCrimen"]').value;
+                const ubicacion = document.querySelector('input[name="Ubicacion"]').value;
+                const tipoCrimenId = document.querySelector('select[name="TipoCrimenId"]').value;
+                const modusOperandiId = document.querySelector('select[name="ModusOperandiId"]').value;
+                const areaGeografica = document.querySelector('select[name="AreaGeografica"]').value;
+                const horarioCrimen = document.querySelector('select[name="HorarioCrimen"]').value;
+
+                if (!fechaCrimen || !ubicacion || !tipoCrimenId || !modusOperandiId || !areaGeografica || !horarioCrimen) {
+                    e.preventDefault();
+                    alert('Por favor, complete todos los campos obligatorios');
+                    return false;
+                }
+
+                // Reorganizar las descripciones para que coincidan con el orden de las evidencias seleccionadas
+                const descripcionesInputs = document.querySelectorAll('.evidencia-desc-input');
+                const evidenciasSeleccionadas = [];
+                const descripcionesSeleccionadas = [];
+                
+                checkboxes.forEach(checkbox => {
+                    if (checkbox.checked) {
+                        const evidenciaValue = checkbox.value;
+                        evidenciasSeleccionadas.push(evidenciaValue);
+                        
+                        // Buscar la descripción correspondiente
+                        const descripcionInput = checkbox.closest('.evidencia-item').querySelector('.evidencia-desc-input');
+                        const descripcion = descripcionInput ? descripcionInput.value.trim() : '';
+                        descripcionesSeleccionadas.push(descripcion);
+                    }
+                });
+                
+                // Limpiar todos los inputs de descripción no seleccionados
+                descripcionesInputs.forEach(input => {
+                    const checkbox = input.closest('.evidencia-item').querySelector('.evidencia-checkbox');
+                    if (!checkbox.checked) {
+                        input.disabled = true; // Deshabilitar para que no se envíe
+                    }
+                });
+            });
+        });
+    </script>
 }
 
 <style>
@@ -197,25 +290,18 @@
             outline: none;
         }
 
-    .checkbox-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+    .evidencia-item {
+        background-color: #f8f9fa;
+        transition: background-color 0.2s;
     }
 
-    .checkbox-label {
-        display: flex;
-        align-items: center;
-        font-weight: normal;
-        cursor: pointer;
-        padding: 5px;
+    .evidencia-item:hover {
+        background-color: #e9ecef;
     }
 
-        .checkbox-label input[type="checkbox"] {
-            margin-right: 8px;
-            width: 16px;
-            height: 16px;
-        }
+    .evidencia-descripcion {
+        margin-top: 10px;
+    }
 
     .btn-primary {
         background-color: #1a3a52;

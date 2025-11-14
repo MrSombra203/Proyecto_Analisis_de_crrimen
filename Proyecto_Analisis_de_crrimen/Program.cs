@@ -36,6 +36,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Registrar el servicio de comparaci�n (CORE del sistema)
 builder.Services.AddScoped<ComparacionService>();
+builder.Services.AddScoped<Proyecto_Analisis_de_crimen.Services.AuthenticationService>();
 
 // Configurar sesiones
 builder.Services.AddSession(options =>
@@ -43,6 +44,7 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
 });
 
 var app = builder.Build();
@@ -98,8 +100,45 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthorization();
+// IMPORTANTE: Session debe ir antes de UseAuthorization
 app.UseSession();
+
+// Middleware personalizado para autenticación basada en sesión
+app.Use(async (context, next) =>
+{
+    var session = context.Session;
+    var userId = session.GetInt32("UserId");
+    var nombreUsuario = session.GetString("NombreUsuario");
+    var rolId = session.GetInt32("RolId");
+    var rolNombre = session.GetString("RolNombre");
+
+    if (userId.HasValue && !string.IsNullOrEmpty(nombreUsuario))
+    {
+        // Crear claims para el usuario autenticado
+        var claims = new List<System.Security.Claims.Claim>
+        {
+            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, userId.Value.ToString()),
+            new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, nombreUsuario)
+        };
+
+        if (rolId.HasValue)
+        {
+            claims.Add(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, rolId.Value.ToString()));
+        }
+
+        if (!string.IsNullOrEmpty(rolNombre))
+        {
+            claims.Add(new System.Security.Claims.Claim("RolNombre", rolNombre));
+        }
+
+        var identity = new System.Security.Claims.ClaimsIdentity(claims, "Session");
+        context.User = new System.Security.Claims.ClaimsPrincipal(identity);
+    }
+
+    await next();
+});
+
+app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
