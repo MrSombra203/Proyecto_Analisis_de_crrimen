@@ -2,7 +2,7 @@
 
 Sistema web desarrollado en ASP.NET Core MVC para el registro, análisis y comparación de escenas de crímenes, con capacidades avanzadas de detección de patrones y identificación de crímenes en serie.
 
-## 📋 Tabla de Contenidos
+##  Tabla de Contenidos
 
 - [Descripción General](#descripción-general)
 - [Características Principales](#características-principales)
@@ -21,13 +21,13 @@ Sistema web desarrollado en ASP.NET Core MVC para el registro, análisis y compa
 
 ---
 
-## 🎯 Descripción General
+##  Descripción General
 
 Este sistema permite a las autoridades y analistas de crímenes registrar escenas delictivas de manera estructurada, comparar casos similares y detectar automáticamente patrones que puedan indicar crímenes en serie. El sistema utiliza un algoritmo de comparación avanzado que analiza múltiples factores para determinar el grado de similitud entre diferentes escenas de crímenes.
 
 ---
 
-## ✨ Características Principales
+##  Características Principales
 
 - **Registro de Escenas de Crimen**: Captura detallada de información sobre crímenes incluyendo ubicación, fecha, tipo, modus operandi, evidencias y características adicionales
 - **Sistema de Comparación Inteligente**: Algoritmo que calcula el porcentaje de similitud entre escenas basado en múltiples criterios
@@ -39,7 +39,7 @@ Este sistema permite a las autoridades y analistas de crímenes registrar escena
 
 ---
 
-## 🔥 Core del Sistema
+##  Core del Sistema
 
 ### ComparacionService - El Corazón del Sistema
 
@@ -80,7 +80,7 @@ Identifica grupos de crímenes que forman series, utilizando un umbral de 75% pa
 
 ---
 
-## 🏗️ Arquitectura
+##  Arquitectura
 
 El proyecto sigue el patrón **MVC (Model-View-Controller)** con una arquitectura en capas:
 
@@ -117,7 +117,7 @@ El proyecto sigue el patrón **MVC (Model-View-Controller)** con una arquitectur
 
 ---
 
-## 🛠️ Tecnologías Utilizadas
+##  Tecnologías Utilizadas
 
 - **.NET 8.0**: Framework principal
 - **ASP.NET Core MVC**: Framework web
@@ -129,7 +129,7 @@ El proyecto sigue el patrón **MVC (Model-View-Controller)** con una arquitectur
 
 ---
 
-## 📦 Requisitos Previos
+##  Requisitos Previos
 
 - **.NET 8.0 SDK** o superior
 - **SQL Server** (LocalDB, Express, o versión completa)
@@ -138,7 +138,7 @@ El proyecto sigue el patrón **MVC (Model-View-Controller)** con una arquitectur
 
 ---
 
-## 🚀 Instalación y Configuración
+##  Instalación y Configuración
 
 ### 1. Clonar el Repositorio
 
@@ -199,7 +199,7 @@ El sistema requiere que crees usuarios manualmente en la base de datos o a trav�
 
 ---
 
-## 📁 Estructura del Proyecto
+##  Estructura del Proyecto
 
 ```
 Proyecto_Analisis_de_crrimen/
@@ -223,7 +223,7 @@ Proyecto_Analisis_de_crrimen/
 │   └── ApplicationDbContext.cs      # Contexto de EF Core
 │
 ├── Services/                 # Servicios de negocio
-│   ├── ComparacionService.cs        # ⭐ CORE: Algoritmo de comparación
+│   ├── ComparacionService.cs        # CORE: Algoritmo de comparación
 │   └── AuthenticationService.cs     # Servicio de autenticación
 │
 ├── Attributes/               # Atributos personalizados
@@ -248,7 +248,7 @@ Proyecto_Analisis_de_crrimen/
 
 ---
 
-## 🗄️ Modelo de Datos
+##  Modelo de Datos
 
 ### Entidades Principales
 
@@ -304,7 +304,7 @@ Usuario (N) ──→ (1) Rol
 
 ---
 
-## 🎮 Funcionalidades
+##  Funcionalidades
 
 ### Para Todos los Usuarios Autenticados
 
@@ -351,7 +351,7 @@ Usuario (N) ──→ (1) Rol
 
 ---
 
-## 🧮 Algoritmo de Comparación
+##  Algoritmo de Comparación
 
 El algoritmo de comparación es el **núcleo del sistema**. Evalúa múltiples factores para determinar la similitud entre escenas:
 
@@ -409,7 +409,7 @@ Clasificación: CrimenEnSerie
 
 ---
 
-## 🔐 Sistema de Autenticación
+##  Sistema de Autenticación
 
 ### Autenticación Basada en Sesión
 
@@ -448,7 +448,7 @@ Usuario → Login → AuthenticationService.AuthenticateAsync()
 
 ---
 
-## 🗃️ Configuración de Base de Datos
+##  Configuración de Base de Datos
 
 ### Esquema de Tablas
 
@@ -479,7 +479,7 @@ El `ApplicationDbContext` configura índices para optimizar consultas:
 
 ---
 
-## 📖 Uso del Sistema
+##  Uso del Sistema
 
 ### 1. Iniciar Sesión
 
@@ -534,7 +534,7 @@ El `ApplicationDbContext` configura índices para optimizar consultas:
 
 ---
 
-## 🔍 Características Técnicas Destacadas
+##  Características Técnicas Destacadas
 
 ### Validaciones
 
@@ -562,7 +562,7 @@ El `ApplicationDbContext` configura índices para optimizar consultas:
 
 ---
 
-## 📝 Notas Importantes
+##  Notas Importantes
 
 1. **Contraseñas**: El sistema actualmente almacena contraseñas en texto plano. **Se recomienda encarecidamente implementar hashing** antes de usar en producción.
 
@@ -574,7 +574,7 @@ El `ApplicationDbContext` configura índices para optimizar consultas:
 
 ---
 
-## 🤝 Contribuciones
+##  Contribuciones
 
 Este es un proyecto académico/demostrativo. Para mejoras o correcciones:
 
@@ -585,19 +585,19 @@ Este es un proyecto académico/demostrativo. Para mejoras o correcciones:
 
 ---
 
-## 📄 Licencia
+##  Licencia
 
 Este proyecto es de uso educativo/demostrativo.
 
 ---
 
-## 👨‍💻 Autor
+##  Autor
 
 Sistema desarrollado para análisis y gestión de escenas de crímenes.
 
 ---
 
-## 🎓 Aprendizajes Clave del Proyecto
+##  Aprendizajes Clave del Proyecto
 
 Este proyecto demuestra:
 
