@@ -69,6 +69,36 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 ModelState.AddModelError("Ubicacion", "La ubicación es obligatoria");
             }
 
+            // VALIDACIÓN BACK-END: Verificar que TipoCrimenId existe y está activo en la BD
+            if (escena.TipoCrimenId > 0)
+            {
+                var tipoCrimenExiste = await _context.TiposCrimen
+                    .AnyAsync(t => t.Id == escena.TipoCrimenId && t.Activo);
+                if (!tipoCrimenExiste)
+                {
+                    ModelState.AddModelError("TipoCrimenId", "El tipo de crimen seleccionado no existe o no está activo");
+                }
+            }
+            else
+            {
+                ModelState.AddModelError("TipoCrimenId", "Debe seleccionar un tipo de crimen");
+            }
+
+            // VALIDACIÓN BACK-END: Verificar que ModusOperandiId existe y está activo en la BD
+            if (escena.ModusOperandiId > 0)
+            {
+                var modusOperandiExiste = await _context.ModusOperandi
+                    .AnyAsync(m => m.Id == escena.ModusOperandiId && m.Activo);
+                if (!modusOperandiExiste)
+                {
+                    ModelState.AddModelError("ModusOperandiId", "El modus operandi seleccionado no existe o no está activo");
+                }
+            }
+            else
+            {
+                ModelState.AddModelError("ModusOperandiId", "Debe seleccionar un modus operandi");
+            }
+
             if (ModelState.IsValid)
             {
                 try

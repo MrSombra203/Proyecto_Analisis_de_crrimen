@@ -72,10 +72,30 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 ModelState.AddModelError("NombreUsuario", "Este nombre de usuario ya está en uso");
             }
 
-            // Validar email único
-            if (await _authService.EmailExisteAsync(usuario.Email))
+            // VALIDACIÓN BACK-END DATO SENSIBLE: Email - Validación robusta antes de guardar
+            if (string.IsNullOrWhiteSpace(usuario.Email))
             {
-                ModelState.AddModelError("Email", "Este email ya está en uso");
+                ModelState.AddModelError("Email", "El correo electrónico es obligatorio");
+            }
+            else
+            {
+                // Validar formato de email con expresión regular (validación back-end)
+                var emailRegex = new System.Text.RegularExpressions.Regex(
+                    @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                
+                if (!emailRegex.IsMatch(usuario.Email.Trim()))
+                {
+                    ModelState.AddModelError("Email", "El formato del correo electrónico no es válido");
+                }
+                else
+                {
+                    // Validar email único en BD (validación back-end)
+                    if (await _authService.EmailExisteAsync(usuario.Email))
+                    {
+                        ModelState.AddModelError("Email", "Este email ya está en uso");
+                    }
+                }
             }
 
             // Validar contraseña
@@ -182,10 +202,30 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 ModelState.AddModelError("NombreUsuario", "Este nombre de usuario ya está en uso");
             }
 
-            // Validar email único (excluyendo el actual)
-            if (await _authService.EmailExisteAsync(usuario.Email, id))
+            // 🚨 VALIDACIÓN BACK-END DATO SENSIBLE: Email - Validación robusta antes de guardar
+            if (string.IsNullOrWhiteSpace(usuario.Email))
             {
-                ModelState.AddModelError("Email", "Este email ya está en uso");
+                ModelState.AddModelError("Email", "El correo electrónico es obligatorio");
+            }
+            else
+            {
+                // Validar formato de email con expresión regular (validación back-end)
+                var emailRegex = new System.Text.RegularExpressions.Regex(
+                    @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                
+                if (!emailRegex.IsMatch(usuario.Email.Trim()))
+                {
+                    ModelState.AddModelError("Email", "El formato del correo electrónico no es válido");
+                }
+                else
+                {
+                    // Validar email único en BD excluyendo el actual (validación back-end)
+                    if (await _authService.EmailExisteAsync(usuario.Email, id))
+                    {
+                        ModelState.AddModelError("Email", "Este email ya está en uso");
+                    }
+                }
             }
 
             // Validar que el RolId exista
