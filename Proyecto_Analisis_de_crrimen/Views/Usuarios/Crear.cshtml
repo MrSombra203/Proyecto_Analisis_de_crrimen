@@ -32,7 +32,14 @@
                     <form asp-action="Crear" method="post" id="crearUsuarioForm">
                         @Html.AntiForgeryToken()
 
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                ⚠️ @TempData["Error"]
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        }
+                        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
 
                         <div class="row mb-3">
                             <div class="col-md-6">

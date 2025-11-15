@@ -57,8 +57,17 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 return Redirect(returnUrl);
             }
 
-            // Redirigir al dashboard después del login exitoso
-            return RedirectToAction("Dashboard", "EscenaCrimen");
+            // Redirigir según el rol del usuario
+            // Solo administradores pueden acceder al dashboard
+            if (usuario.RolId == 1) // 1 = Administrador
+            {
+                return RedirectToAction("Dashboard", "EscenaCrimen");
+            }
+            else
+            {
+                // Usuarios no administradores son redirigidos al índice de escenas
+                return RedirectToAction("Index", "EscenaCrimen");
+            }
         }
 
         // POST: Auth/Logout

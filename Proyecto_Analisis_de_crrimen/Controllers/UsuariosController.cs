@@ -84,19 +84,46 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 ModelState.AddModelError("Password", "La contraseña debe tener al menos 6 caracteres");
             }
 
+            // Validar que el RolId exista
+            if (usuario.RolId > 0)
+            {
+                var rolExiste = await _context.Roles.AnyAsync(r => r.Id == usuario.RolId);
+                if (!rolExiste)
+                {
+                    ModelState.AddModelError("RolId", "El rol seleccionado no existe");
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Guardar contraseña en texto plano (según la estructura de la BD)
-                    usuario.FechaCreacion = DateTime.Now;
-                    usuario.Activo = true;
+                    // Crear nueva instancia sin propiedades de navegación para evitar problemas
+                    var nuevoUsuario = new Usuario
+                    {
+                        NombreUsuario = usuario.NombreUsuario?.Trim() ?? "",
+                        Email = usuario.Email?.Trim() ?? "",
+                        Password = usuario.Password, // Texto plano según la BD
+                        NombreCompleto = usuario.NombreCompleto?.Trim() ?? "",
+                        RolId = usuario.RolId,
+                        Activo = usuario.Activo,
+                        FechaCreacion = DateTime.Now
+                    };
 
-                    _context.Usuarios.Add(usuario);
+                    _context.Usuarios.Add(nuevoUsuario);
                     await _context.SaveChangesAsync();
 
-                    TempData["Success"] = $"Usuario '{usuario.NombreUsuario}' creado exitosamente";
+                    TempData["Success"] = $"Usuario '{nuevoUsuario.NombreUsuario}' creado exitosamente";
                     return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateException dbEx)
+                {
+                    var errorMessage = "Error al guardar en la base de datos: " + dbEx.Message;
+                    if (dbEx.InnerException != null)
+                    {
+                        errorMessage += " | Detalles: " + dbEx.InnerException.Message;
+                    }
+                    ModelState.AddModelError("", errorMessage);
                 }
                 catch (Exception ex)
                 {
@@ -161,14 +188,32 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 ModelState.AddModelError("Email", "Este email ya está en uso");
             }
 
+            // Validar que el RolId exista
+            if (usuario.RolId > 0)
+            {
+                var rolExiste = await _context.Roles.AnyAsync(r => r.Id == usuario.RolId);
+                if (!rolExiste)
+                {
+                    ModelState.AddModelError("RolId", "El rol seleccionado no existe");
+                }
+            }
+
+            // Usar NuevaPassword si está disponible, sino usar Password
+            string? nuevaPassword = usuario.NuevaPassword;
+            if (string.IsNullOrWhiteSpace(nuevaPassword))
+            {
+                nuevaPassword = usuario.Password; // Fallback a Password si NuevaPassword está vacío
+            }
+
             // Remover validación de Password si está vacío (no se cambia)
-            if (string.IsNullOrWhiteSpace(usuario.Password))
+            if (string.IsNullOrWhiteSpace(nuevaPassword))
             {
                 ModelState.Remove("Password");
+                ModelState.Remove("NuevaPassword");
             }
-            else if (usuario.Password.Length < 6)
+            else if (nuevaPassword.Length < 6)
             {
-                ModelState.AddModelError("Password", "La contraseña debe tener al menos 6 caracteres");
+                ModelState.AddModelError("NuevaPassword", "La contraseña debe tener al menos 6 caracteres");
             }
 
             if (ModelState.IsValid)
@@ -181,23 +226,32 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                         return NotFound();
                     }
 
-                    // Actualizar propiedades
-                    usuarioExistente.NombreUsuario = usuario.NombreUsuario;
-                    usuarioExistente.Email = usuario.Email;
-                    usuarioExistente.NombreCompleto = usuario.NombreCompleto;
+                    // Actualizar propiedades sin tocar la propiedad de navegación
+                    usuarioExistente.NombreUsuario = usuario.NombreUsuario?.Trim() ?? "";
+                    usuarioExistente.Email = usuario.Email?.Trim() ?? "";
+                    usuarioExistente.NombreCompleto = usuario.NombreCompleto?.Trim() ?? "";
                     usuarioExistente.RolId = usuario.RolId;
                     usuarioExistente.Activo = usuario.Activo;
 
                     // Actualizar contraseña solo si se proporcionó una nueva
-                    if (!string.IsNullOrWhiteSpace(usuario.Password))
+                    if (!string.IsNullOrWhiteSpace(nuevaPassword))
                     {
-                        usuarioExistente.Password = usuario.Password;
+                        usuarioExistente.Password = nuevaPassword;
                     }
 
                     await _context.SaveChangesAsync();
 
                     TempData["Success"] = $"Usuario '{usuario.NombreUsuario}' actualizado exitosamente";
                     return RedirectToAction(nameof(Index));
+                }
+                catch (DbUpdateException dbEx)
+                {
+                    var errorMessage = "Error al guardar en la base de datos: " + dbEx.Message;
+                    if (dbEx.InnerException != null)
+                    {
+                        errorMessage += " | Detalles: " + dbEx.InnerException.Message;
+                    }
+                    ModelState.AddModelError("", errorMessage);
                 }
                 catch (Exception ex)
                 {

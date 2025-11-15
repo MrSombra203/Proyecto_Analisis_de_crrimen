@@ -9,7 +9,15 @@
             <p class="hero-subtitle">Plataforma Integral para Detección de Patrones Criminales</p>
             <div class="hero-buttons">
                 @Html.ActionLink("REGISTRAR ESCENA", "Registrar", "EscenaCrimen", null, new { @class = "btn btn-hero-primary" })
-                @Html.ActionLink("VER DASHBOARD", "Dashboard", "EscenaCrimen", null, new { @class = "btn btn-hero-secondary" })
+                @{
+                    var userId = Context.Session.GetInt32("UserId");
+                    var rolId = Context.Session.GetInt32("RolId");
+                    var isAdmin = rolId == 1;
+                }
+                @if (isAdmin && userId.HasValue)
+                {
+                    @Html.ActionLink("VER DASHBOARD", "Dashboard", "EscenaCrimen", null, new { @class = "btn btn-hero-secondary" })
+                }
             </div>
         </div>
     </div>
@@ -38,12 +46,20 @@
                 @Html.ActionLink("VER ANÁLISIS", "Index", "EscenaCrimen", null, new { @class = "btn btn-feature" })
             </div>
 
-            <div class="feature-card">
-                <div class="feature-icon">📈</div>
-                <h3>Dashboard Estadístico</h3>
-                <p>Visualización en tiempo real de métricas operacionales y alertas del sistema.</p>
-                @Html.ActionLink("DASHBOARD", "Dashboard", "EscenaCrimen", null, new { @class = "btn btn-feature" })
-            </div>
+            @{
+                var userIdHome = Context.Session.GetInt32("UserId");
+                var rolIdHome = Context.Session.GetInt32("RolId");
+                var isAdminHome = rolIdHome == 1;
+            }
+            @if (isAdminHome && userIdHome.HasValue)
+            {
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3>Dashboard Estadístico</h3>
+                    <p>Visualización en tiempo real de métricas operacionales y alertas del sistema.</p>
+                    @Html.ActionLink("DASHBOARD", "Dashboard", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+                </div>
+            }
         </div>
     </div>
 

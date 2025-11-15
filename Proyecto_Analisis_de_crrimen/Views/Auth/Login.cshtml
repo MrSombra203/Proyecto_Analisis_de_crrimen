@@ -7,14 +7,14 @@
     <div class="col-md-5">
         <div class="card shadow-lg">
             <div class="card-header bg-primary text-white text-center py-3">
-                <h3 class="mb-0">🔐 INICIAR SESIÓN</h3>
+                <h3 class="mb-0">INICIAR SESIÓN</h3>
                 <p class="mb-0 small">Sistema de Análisis de Escenas del Crimen</p>
             </div>
             <div class="card-body p-4">
                 @if (TempData["Error"] != null)
                 {
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        ⚠️ @TempData["Error"]
+                         @TempData["Error"]
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 }
@@ -22,7 +22,7 @@
                 @if (TempData["Success"] != null)
                 {
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        ✅ @TempData["Success"]
+                         @TempData["Success"]
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 }
@@ -34,7 +34,7 @@
 
                     <div class="mb-3">
                         <label for="nombreUsuario" class="form-label fw-bold">
-                            👤 Nombre de Usuario
+                            Nombre de Usuario
                         </label>
                         <input type="text" 
                                class="form-control form-control-lg" 
@@ -49,7 +49,7 @@
 
                     <div class="mb-4">
                         <label for="password" class="form-label fw-bold">
-                            🔑 Contraseña
+                            Contraseña
                         </label>
                         <input type="password" 
                                class="form-control form-control-lg" 
@@ -76,7 +76,7 @@
 
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary btn-lg">
-                            🚀 Iniciar Sesión
+                            Iniciar Sesión
                         </button>
                     </div>
                 </form>
@@ -85,7 +85,7 @@
 
                 <div class="alert alert-info mb-0">
                     <h6 class="alert-heading">
-                        ℹ️ Usuarios de Prueba:
+                        Usuarios de Prueba:
                     </h6>
                     <div class="small">
                         <strong>Administrador:</strong><br />

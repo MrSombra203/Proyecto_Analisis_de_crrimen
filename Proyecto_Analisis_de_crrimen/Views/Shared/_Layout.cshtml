@@ -42,12 +42,12 @@
                             <li class="nav-item">
                                 <a class="nav-link" asp-area="" asp-controller="EscenaCrimen" asp-action="Comparar">Comparar</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-controller="EscenaCrimen" asp-action="Dashboard">Dashboard</a>
-                            </li>
                             
                             @if (isAdmin)
                             {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-area="" asp-controller="EscenaCrimen" asp-action="Dashboard">Dashboard</a>
+                                </li>
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" id="catalogosDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         Catálogos

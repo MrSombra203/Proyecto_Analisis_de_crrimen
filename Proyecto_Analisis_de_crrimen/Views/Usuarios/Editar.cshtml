@@ -35,7 +35,7 @@
                         <input type="hidden" asp-for="Id" />
                         <input type="hidden" asp-for="FechaCreacion" />
 
-                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
 
                         <div class="row mb-3">
                             <div class="col-md-6">
@@ -59,11 +59,11 @@
 
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label asp-for="Password" class="form-label fw-bold">
+                                <label asp-for="NuevaPassword" class="form-label fw-bold">
                                     🔑 Nueva Contraseña
                                 </label>
-                                <input asp-for="Password" type="password" class="form-control" placeholder="Dejar en blanco para no cambiar" />
-                                <span asp-validation-for="Password" class="text-danger"></span>
+                                <input asp-for="NuevaPassword" type="password" class="form-control" placeholder="Dejar en blanco para no cambiar" />
+                                <span asp-validation-for="NuevaPassword" class="text-danger"></span>
                                 <div class="form-text">Deje en blanco si no desea cambiar la contraseña. Mínimo 6 caracteres si se cambia.</div>
                             </div>
 
@@ -140,7 +140,7 @@
     
     <script>
         document.getElementById('editarUsuarioForm').addEventListener('submit', function(e) {
-            const password = document.getElementById('Password').value;
+            const password = document.getElementById('NuevaPassword').value;
             
             // Solo validar si se proporcionó una contraseña
             if (password && password.length > 0 && password.length < 6) {

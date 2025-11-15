@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Proyecto_Analisis_de_crimen.Models;
 using Proyecto_Analisis_de_crimen.Services;
+using Proyecto_Analisis_de_crimen.Attributes;
 
 namespace Proyecto_Analisis_de_crimen.Controllers
 {
@@ -194,6 +195,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         }
 
         // GET: EscenaCrimen/Dashboard
+        [RequireAdmin] // Solo administradores pueden acceder al dashboard
         public async Task<IActionResult> Dashboard()
         {
             var totalEscenas = await _context.EscenasCrimen.CountAsync();
