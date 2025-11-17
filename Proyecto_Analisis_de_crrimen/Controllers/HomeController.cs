@@ -15,21 +15,8 @@ namespace Proyecto_Analisis_de_crimen.Controllers
 
         public IActionResult Index()
         {
-            // Si el usuario está autenticado y es administrador, redirigir al dashboard
-            var userId = HttpContext.Session.GetInt32("UserId");
-            var rolId = HttpContext.Session.GetInt32("RolId");
-            
-            if (userId.HasValue && rolId == 1) // 1 = Administrador
-            {
-                return RedirectToAction("Dashboard", "EscenaCrimen");
-            }
-            
-            // Si el usuario está autenticado pero no es administrador, redirigir a Index de EscenaCrimen
-            if (userId.HasValue)
-            {
-                return RedirectToAction("Index", "EscenaCrimen");
-            }
-            
+            // La página de inicio es pública, pero mostrará diferentes opciones según el estado de autenticación
+            // No redirigir automáticamente - dejar que el usuario elija desde la página de inicio
             return View();
         }
 

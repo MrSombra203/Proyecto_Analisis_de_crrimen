@@ -19,6 +19,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         }
 
         // GET: EscenaCrimen
+        [RequireAuth]
         public async Task<IActionResult> Index()
         {
             var escenas = await _context.EscenasCrimen
@@ -31,6 +32,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         }
 
         // GET: EscenaCrimen/Registrar
+        [RequireAuth]
         public async Task<IActionResult> Registrar()
         {
             await CargarCatalogosEnViewBag();
@@ -55,6 +57,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         // POST: EscenaCrimen/Registrar
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequireAuth]
         public async Task<IActionResult> Registrar(EscenaCrimen escena, string[] evidencias)
         {
             // Asegurar que la colección de evidencias esté inicializada
@@ -156,6 +159,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         }
 
         // GET: EscenaCrimen/Comparar
+        [RequireAuth]
         public async Task<IActionResult> Comparar()
         {
             var escenas = await _context.EscenasCrimen
@@ -175,6 +179,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
 
         // POST: EscenaCrimen/RealizarComparacion
         [HttpPost]
+        [RequireAuth]
         public async Task<IActionResult> RealizarComparacion(int escenaBaseId, int escenaComparadaId)
         {
             var escenaBase = await _context.EscenasCrimen
@@ -200,6 +205,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         }
 
         // GET: EscenaCrimen/Resultados/{id}
+        [RequireAuth]
         public async Task<IActionResult> Resultados(int id)
         {
             var escenaBase = await _context.EscenasCrimen

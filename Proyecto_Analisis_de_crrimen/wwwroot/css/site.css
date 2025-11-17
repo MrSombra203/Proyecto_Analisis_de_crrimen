@@ -1,5 +1,30 @@
+/* ============================================
+   ESQUEMA DE COLORES UNIFICADO DEL SISTEMA
+   ============================================ */
+:root {
+  --color-primary: #1a3a52;
+  --color-primary-dark: #0f2535;
+  --color-secondary: #2c5aa0;
+  --color-secondary-light: #3a6bb5;
+  --color-secondary-lighter: #4a7bc8;
+  --color-accent: #2c5aa0;
+  --color-text: #333;
+  --color-text-light: #666;
+  --color-text-muted: #6c757d;
+  --color-bg-light: #f8f9fa;
+  --color-bg-white: #ffffff;
+  --color-border: #dee2e6;
+  --color-border-light: #e5e5e5;
+  --color-success: #28a745;
+  --color-danger: #dc3545;
+  --color-warning: #ffc107;
+  --color-info: #17a2b8;
+}
+
 html {
   font-size: 14px;
+  position: relative;
+  min-height: 100%;
 }
 
 @media (min-width: 768px) {
@@ -8,15 +33,221 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
 body {
   margin-bottom: 60px;
+  color: var(--color-text);
+}
+
+/* ============================================
+   ESTILOS GLOBALES DE BOTONES
+   ============================================ */
+.btn-primary {
+  background-color: var(--color-primary);
+  border-color: var(--color-secondary);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary-light);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(26, 58, 82, 0.3);
+}
+
+.btn-primary:active {
+  background-color: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  background-color: var(--color-text-muted);
+  border-color: var(--color-text-muted);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #5a6268;
+  color: white;
+}
+
+.btn-info {
+  background-color: var(--color-secondary);
+  border-color: var(--color-secondary);
+  color: white;
+  font-weight: 600;
+}
+
+.btn-info:hover {
+  background-color: var(--color-secondary-light);
+  border-color: var(--color-secondary-light);
+  color: white;
+}
+
+/* ============================================
+   ESTILOS DE FORMULARIOS
+   ============================================ */
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus {
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 0.2rem rgba(44, 90, 160, 0.25);
+  outline: none;
+}
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--color-secondary);
+}
+
+/* ============================================
+   ESTILOS DE NAVBAR
+   ============================================ */
+.navbar-dark {
+  background-color: var(--color-primary) !important;
+  border-bottom: 2px solid var(--color-secondary);
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.nav-link {
+  transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+  color: var(--color-secondary-lighter) !important;
+}
+
+/* ============================================
+   ESTILOS DE TABLAS
+   ============================================ */
+.table-dark,
+.thead-dark {
+  background-color: var(--color-primary) !important;
+  color: white;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--color-bg-light);
+}
+
+/* ============================================
+   ESTILOS DE ALERTAS
+   ============================================ */
+.alert-success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.alert-info {
+  background-color: #d1ecf1;
+  border-color: #bee5eb;
+  color: #0c5460;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffc107;
+  color: #856404;
+}
+
+/* ============================================
+   ESTILOS DE BADGES
+   ============================================ */
+.badge.bg-primary {
+  background-color: var(--color-primary) !important;
+}
+
+.badge.bg-info {
+  background-color: var(--color-secondary) !important;
+}
+
+/* ============================================
+   ESTILOS DE ENLACES
+   ============================================ */
+a {
+  color: var(--color-secondary);
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--color-secondary-light);
+}
+
+/* ============================================
+   ESTILOS DE HEADERS Y TÍTULOS
+   ============================================ */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.page-header {
+  border-bottom: 2px solid var(--color-primary);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.page-header h2 {
+  color: var(--color-primary);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* ============================================
+   ESTILOS DE TARJETAS Y CONTENEDORES
+   ============================================ */
+.card-header.bg-primary {
+  background-color: var(--color-primary) !important;
+  border-bottom: 2px solid var(--color-secondary);
+}
+
+/* ============================================
+   ESTILOS DE FOOTER
+   ============================================ */
+.border-top {
+  border-top: 1px solid var(--color-border-light) !important;
+}
+
+.border-bottom {
+  border-bottom: 1px solid var(--color-border-light) !important;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  white-space: nowrap;
+  line-height: 60px;
+  background-color: var(--color-bg-light);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.box-shadow {
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+}
+
+button.accept-policy {
+  font-size: 1rem;
+  line-height: inherit;
 }

@@ -8,15 +8,22 @@
             <h1>SISTEMA DE ANÁLISIS DE ESCENAS DEL CRIMEN</h1>
             <p class="hero-subtitle">Plataforma Integral para Detección de Patrones Criminales</p>
             <div class="hero-buttons">
-                @Html.ActionLink("REGISTRAR ESCENA", "Registrar", "EscenaCrimen", null, new { @class = "btn btn-hero-primary" })
                 @{
                     var userId = Context.Session.GetInt32("UserId");
                     var rolId = Context.Session.GetInt32("RolId");
                     var isAdmin = rolId == 1;
                 }
-                @if (isAdmin && userId.HasValue)
+                @if (userId.HasValue)
                 {
-                    @Html.ActionLink("VER DASHBOARD", "Dashboard", "EscenaCrimen", null, new { @class = "btn btn-hero-secondary" })
+                    @Html.ActionLink("REGISTRAR ESCENA", "Registrar", "EscenaCrimen", null, new { @class = "btn btn-hero-primary" })
+                    @if (isAdmin)
+                    {
+                        @Html.ActionLink("VER DASHBOARD", "Dashboard", "EscenaCrimen", null, new { @class = "btn btn-hero-secondary" })
+                    }
+                }
+                else
+                {
+                    @Html.ActionLink("INICIAR SESIÓN", "Login", "Auth", null, new { @class = "btn btn-hero-primary" })
                 }
             </div>
         </div>
@@ -25,39 +32,72 @@
     <div class="features-section">
         <h2>FUNCIONALIDADES PRINCIPALES</h2>
         <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">📝</div>
-                <h3>Registro de Escenas</h3>
-                <p>Captura detallada de información de escenas del crimen con datos estructurados y estandarizados.</p>
-                @Html.ActionLink("REGISTRAR", "Registrar", "EscenaCrimen", null, new { @class = "btn btn-feature" })
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">🔍</div>
-                <h3>Comparación Automática</h3>
-                <p>Algoritmos avanzados que detectan similitudes entre escenas basándose en múltiples criterios.</p>
-                @Html.ActionLink("COMPARAR", "Comparar", "EscenaCrimen", null, new { @class = "btn btn-feature" })
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3>Análisis de Patrones</h3>
-                <p>Identificación de crímenes en serie mediante análisis estadístico y detección de tendencias.</p>
-                @Html.ActionLink("VER ANÁLISIS", "Index", "EscenaCrimen", null, new { @class = "btn btn-feature" })
-            </div>
-
             @{
                 var userIdHome = Context.Session.GetInt32("UserId");
                 var rolIdHome = Context.Session.GetInt32("RolId");
                 var isAdminHome = rolIdHome == 1;
             }
-            @if (isAdminHome && userIdHome.HasValue)
+            @if (userIdHome.HasValue)
             {
                 <div class="feature-card">
-                    <div class="feature-icon">📈</div>
-                    <h3>Dashboard Estadístico</h3>
-                    <p>Visualización en tiempo real de métricas operacionales y alertas del sistema.</p>
-                    @Html.ActionLink("DASHBOARD", "Dashboard", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+                    <div class="feature-icon">📝</div>
+                    <h3>Registro de Escenas</h3>
+                    <p>Captura detallada de información de escenas del crimen con datos estructurados y estandarizados.</p>
+                    @Html.ActionLink("REGISTRAR", "Registrar", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Comparación Automática</h3>
+                    <p>Algoritmos avanzados que detectan similitudes entre escenas basándose en múltiples criterios.</p>
+                    @Html.ActionLink("COMPARAR", "Comparar", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Análisis de Patrones</h3>
+                    <p>Identificación de crímenes en serie mediante análisis estadístico y detección de tendencias.</p>
+                    @Html.ActionLink("VER ANÁLISIS", "Index", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+                </div>
+
+                @if (isAdminHome)
+                {
+                    <div class="feature-card">
+                        <div class="feature-icon">📈</div>
+                        <h3>Dashboard Estadístico</h3>
+                        <p>Visualización en tiempo real de métricas operacionales y alertas del sistema.</p>
+                        @Html.ActionLink("DASHBOARD", "Dashboard", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Acceso Requerido</h3>
+                    <p>Para utilizar las funcionalidades del sistema, debe iniciar sesión con sus credenciales.</p>
+                    @Html.ActionLink("INICIAR SESIÓN", "Login", "Auth", null, new { @class = "btn btn-feature" })
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📝</div>
+                    <h3>Registro de Escenas</h3>
+                    <p>Captura detallada de información de escenas del crimen con datos estructurados y estandarizados.</p>
+                    <p class="text-muted small">Requiere iniciar sesión</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Comparación Automática</h3>
+                    <p>Algoritmos avanzados que detectan similitudes entre escenas basándose en múltiples criterios.</p>
+                    <p class="text-muted small">Requiere iniciar sesión</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Análisis de Patrones</h3>
+                    <p>Identificación de crímenes en serie mediante análisis estadístico y detección de tendencias.</p>
+                    <p class="text-muted small">Requiere iniciar sesión</p>
                 </div>
             }
         </div>
