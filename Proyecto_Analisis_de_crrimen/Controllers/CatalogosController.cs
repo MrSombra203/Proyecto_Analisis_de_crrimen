@@ -6,11 +6,14 @@ using Proyecto_Analisis_de_crimen.Attributes;
 
 namespace Proyecto_Analisis_de_crimen.Controllers
 {
-    [RequireAdmin] // Solo administradores pueden gestionar catálogos
+    // Controlador para gestionar los catálogos del sistema (tipos de crimen y modus operandi)
+    // Solo los administradores pueden acceder aquí
+    [RequireAdmin]
     public class CatalogosController : Controller
     {
         private readonly ApplicationDbContext _context;
 
+        // Constructor con inyección de dependencias
         public CatalogosController(ApplicationDbContext context)
         {
             _context = context;
@@ -20,7 +23,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         // TIPOS DE CRIMEN
         // ============================================
 
-        // GET: Catalogos/TiposCrimen
+        // Muestra la lista de todos los tipos de crimen, ordenados alfabéticamente
         public async Task<IActionResult> TiposCrimen()
         {
             var tipos = await _context.TiposCrimen
@@ -29,13 +32,14 @@ namespace Proyecto_Analisis_de_crimen.Controllers
             return View(tipos);
         }
 
-        // GET: Catalogos/CrearTipoCrimen
+        // Muestra el formulario para crear un nuevo tipo de crimen
         public IActionResult CrearTipoCrimen()
         {
             return View();
         }
 
-        // POST: Catalogos/CrearTipoCrimen
+        // Procesa el formulario cuando se crea un nuevo tipo de crimen
+        // Le asigna automáticamente la fecha de creación y lo marca como activo
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CrearTipoCrimen(TipoCrimen tipoCrimen)
@@ -44,6 +48,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
             {
                 try
                 {
+                    // Le ponemos la fecha actual y lo activamos
                     tipoCrimen.FechaCreacion = DateTime.Now;
                     tipoCrimen.Activo = true;
 
@@ -55,14 +60,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 }
                 catch (DbUpdateException dbEx)
                 {
-                    if (dbEx.InnerException?.Message.Contains("UNIQUE") == true)
-                    {
-                        ModelState.AddModelError("Nombre", "Ya existe un tipo de crimen con este nombre");
-                    }
-                    else
-                    {
-                        ModelState.AddModelError("", "Error al guardar: " + dbEx.Message);
-                    }
+                    ManejarErrorUnicidad(dbEx, "tipo de crimen", "guardar");
                 }
                 catch (Exception ex)
                 {
@@ -73,7 +71,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
             return View(tipoCrimen);
         }
 
-        // GET: Catalogos/EditarTipoCrimen/5
+        // Muestra el formulario de edición con los datos del tipo de crimen
         public async Task<IActionResult> EditarTipoCrimen(int id)
         {
             var tipoCrimen = await _context.TiposCrimen.FindAsync(id);
@@ -84,11 +82,12 @@ namespace Proyecto_Analisis_de_crimen.Controllers
             return View(tipoCrimen);
         }
 
-        // POST: Catalogos/EditarTipoCrimen/5
+        // Procesa el formulario cuando se edita un tipo de crimen
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditarTipoCrimen(int id, TipoCrimen tipoCrimen)
         {
+            // Verificamos que el ID coincida
             if (id != tipoCrimen.Id)
             {
                 return NotFound();
@@ -106,14 +105,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 }
                 catch (DbUpdateException dbEx)
                 {
-                    if (dbEx.InnerException?.Message.Contains("UNIQUE") == true)
-                    {
-                        ModelState.AddModelError("Nombre", "Ya existe un tipo de crimen con este nombre");
-                    }
-                    else
-                    {
-                        ModelState.AddModelError("", "Error al actualizar: " + dbEx.Message);
-                    }
+                    ManejarErrorUnicidad(dbEx, "tipo de crimen", "actualizar");
                 }
                 catch (Exception ex)
                 {
@@ -124,7 +116,8 @@ namespace Proyecto_Analisis_de_crimen.Controllers
             return View(tipoCrimen);
         }
 
-        // POST: Catalogos/DesactivarTipoCrimen/5
+        // Activa o desactiva un tipo de crimen (cambia su estado)
+        // Si está desactivado, no aparecerá en los dropdowns
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DesactivarTipoCrimen(int id)
@@ -135,10 +128,13 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 return NotFound();
             }
 
+            // Cambiamos el estado (si estaba activo, lo desactivamos y viceversa)
             tipoCrimen.Activo = !tipoCrimen.Activo;
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = $"Tipo de crimen '{tipoCrimen.Nombre}' {(tipoCrimen.Activo ? "activado" : "desactivado")} exitosamente";
+            string estado = tipoCrimen.Activo ? "activado" : "desactivado";
+            TempData["Success"] = $"Tipo de crimen '{tipoCrimen.Nombre}' {estado} exitosamente";
+            
             return RedirectToAction(nameof(TiposCrimen));
         }
 
@@ -146,7 +142,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         // MODUS OPERANDI
         // ============================================
 
-        // GET: Catalogos/ModusOperandi
+        // Muestra la lista de todos los modus operandi, ordenados alfabéticamente
         public async Task<IActionResult> ModusOperandi()
         {
             var modus = await _context.ModusOperandi
@@ -155,13 +151,14 @@ namespace Proyecto_Analisis_de_crimen.Controllers
             return View(modus);
         }
 
-        // GET: Catalogos/CrearModusOperandi
+        // Muestra el formulario para crear un nuevo modus operandi
         public IActionResult CrearModusOperandi()
         {
             return View();
         }
 
-        // POST: Catalogos/CrearModusOperandi
+        // Procesa el formulario cuando se crea un nuevo modus operandi
+        // Le asigna automáticamente la fecha de creación y lo marca como activo
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CrearModusOperandi(ModusOperandi modusOperandi)
@@ -170,6 +167,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
             {
                 try
                 {
+                    // Configurar valores por defecto
                     modusOperandi.FechaCreacion = DateTime.Now;
                     modusOperandi.Activo = true;
 
@@ -181,14 +179,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 }
                 catch (DbUpdateException dbEx)
                 {
-                    if (dbEx.InnerException?.Message.Contains("UNIQUE") == true)
-                    {
-                        ModelState.AddModelError("Nombre", "Ya existe un modus operandi con este nombre");
-                    }
-                    else
-                    {
-                        ModelState.AddModelError("", "Error al guardar: " + dbEx.Message);
-                    }
+                    ManejarErrorUnicidad(dbEx, "modus operandi", "guardar");
                 }
                 catch (Exception ex)
                 {
@@ -199,7 +190,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
             return View(modusOperandi);
         }
 
-        // GET: Catalogos/EditarModusOperandi/5
+        // Muestra el formulario de edición con los datos del modus operandi
         public async Task<IActionResult> EditarModusOperandi(int id)
         {
             var modusOperandi = await _context.ModusOperandi.FindAsync(id);
@@ -210,11 +201,12 @@ namespace Proyecto_Analisis_de_crimen.Controllers
             return View(modusOperandi);
         }
 
-        // POST: Catalogos/EditarModusOperandi/5
+        // Procesa el formulario cuando se edita un modus operandi
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditarModusOperandi(int id, ModusOperandi modusOperandi)
         {
+            // Verificamos que el ID coincida
             if (id != modusOperandi.Id)
             {
                 return NotFound();
@@ -232,14 +224,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 }
                 catch (DbUpdateException dbEx)
                 {
-                    if (dbEx.InnerException?.Message.Contains("UNIQUE") == true)
-                    {
-                        ModelState.AddModelError("Nombre", "Ya existe un modus operandi con este nombre");
-                    }
-                    else
-                    {
-                        ModelState.AddModelError("", "Error al actualizar: " + dbEx.Message);
-                    }
+                    ManejarErrorUnicidad(dbEx, "modus operandi", "actualizar");
                 }
                 catch (Exception ex)
                 {
@@ -250,7 +235,8 @@ namespace Proyecto_Analisis_de_crimen.Controllers
             return View(modusOperandi);
         }
 
-        // POST: Catalogos/DesactivarModusOperandi/5
+        // Activa o desactiva un modus operandi (cambia su estado)
+        // Si está desactivado, no aparecerá en los dropdowns
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DesactivarModusOperandi(int id)
@@ -261,11 +247,33 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 return NotFound();
             }
 
+            // Cambiamos el estado (si estaba activo, lo desactivamos y viceversa)
             modusOperandi.Activo = !modusOperandi.Activo;
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = $"Modus operandi '{modusOperandi.Nombre}' {(modusOperandi.Activo ? "activado" : "desactivado")} exitosamente";
+            string estado = modusOperandi.Activo ? "activado" : "desactivado";
+            TempData["Success"] = $"Modus operandi '{modusOperandi.Nombre}' {estado} exitosamente";
+            
             return RedirectToAction(nameof(ModusOperandi));
+        }
+
+        // ============================================
+        // Métodos auxiliares
+        // ============================================
+
+        // Maneja los errores cuando se intenta crear o actualizar algo con un nombre que ya existe
+        // Detecta si el error es por violación de la constraint UNIQUE de la base de datos
+        private void ManejarErrorUnicidad(DbUpdateException dbEx, string entidad, string operacion)
+        {
+            // Si el error es porque ya existe un registro con ese nombre
+            if (dbEx.InnerException?.Message.Contains("UNIQUE") == true)
+            {
+                ModelState.AddModelError("Nombre", $"Ya existe un {entidad} con este nombre");
+            }
+            else
+            {
+                ModelState.AddModelError("", $"Error al {operacion}: {dbEx.Message}");
+            }
         }
     }
 }

@@ -4,10 +4,18 @@ using Proyecto_Analisis_de_crimen.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ============================================
+// REGISTRO DE SERVICIOS
+// ============================================
+
+// Registrar el servicio de controladores y vistas (MVC)
+// Esto permite que la aplicación use el patrón Model-View-Controller
 builder.Services.AddControllersWithViews();
 
-// Configurar Entity Framework Core con SQL Server
+// ============================================
+// CONFIGURACIÓN DE BASE DE DATOS (Entity Framework Core)
+// ============================================
+// Obtener la cadena de conexión desde appsettings.json
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrEmpty(connectionString))
 {
@@ -36,22 +44,39 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Registrar el servicio de comparaci�n (CORE del sistema)
 builder.Services.AddScoped<ComparacionService>();
+
+// Registrar el servicio de autenticación
+// Maneja la validación de credenciales y verificación de usuarios
 builder.Services.AddScoped<Proyecto_Analisis_de_crimen.Services.AuthenticationService>();
 
-// Configurar sesiones
+// ============================================
+// CONFIGURACIÓN DE SESIONES HTTP
+// ============================================
+// Las sesiones permiten almacenar información del usuario entre peticiones HTTP.
+// En este sistema, se usan para mantener el estado de autenticación.
+
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+    options.IdleTimeout = TimeSpan.FromMinutes(30);  // La sesión expira después de 30 min de inactividad
+    options.Cookie.HttpOnly = true;                  // Prevenir acceso desde JavaScript (protección XSS)
+    options.Cookie.IsEssential = true;               // Cookie esencial (no requiere consentimiento GDPR)
+    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;  // HTTPS si está disponible
 });
 
+// ============================================
+// CONSTRUCCIÓN DE LA APLICACIÓN
+// ============================================
 var app = builder.Build();
 
-// Verificar y crear la base de datos si no existe
+// ============================================
+// INICIALIZACIÓN DE BASE DE DATOS
+// ============================================
+// Verificar y crear la base de datos si no existe al iniciar la aplicación.
+// Esto es útil para desarrollo, pero en producción se recomienda usar migraciones.
+
 try
 {
+    // Crear un scope para acceder a los servicios registrados
     using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -59,12 +84,14 @@ try
         
         // Intentar conectar a la base de datos
         var canConnect = context.Database.CanConnect();
+        
         if (!canConnect)
         {
             logger.LogWarning("No se pudo conectar a la base de datos. Intentando crear la base de datos...");
             try
             {
-                // Crear la base de datos si no existe
+                // Crear la base de datos y las tablas si no existen
+                // EnsureCreatedAsync crea la BD y el esquema basado en los modelos
                 await context.Database.EnsureCreatedAsync();
                 logger.LogInformation("Base de datos creada exitosamente.");
             }
@@ -76,28 +103,42 @@ try
         else
         {
             logger.LogInformation("Conexión a la base de datos establecida correctamente.");
-            // Asegurar que las tablas existan
+            // Asegurar que las tablas existan (por si la BD existe pero no las tablas)
             await context.Database.EnsureCreatedAsync();
         }
     }
 }
 catch (Exception ex)
 {
+    // Si hay un error, registrarlo pero no detener la aplicación
+    // Esto permite que la app inicie aunque haya problemas con la BD
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
     logger.LogError(ex, "Error al verificar la conexión a la base de datos: {Message}", ex.Message);
     // No detenemos la aplicación, solo registramos el error
 }
 
-// Configure the HTTP request pipeline.
+// ============================================
+// CONFIGURACIÓN DEL PIPELINE HTTP
+// ============================================
+// El pipeline define el orden en que se procesan las peticiones HTTP.
+// El orden es CRÍTICO: cada middleware procesa la petición en secuencia.
+
+// Configurar manejo de errores según el ambiente
 if (!app.Environment.IsDevelopment())
 {
+    // En producción: usar página de error personalizada
     app.UseExceptionHandler("/Home/Error");
+    // HSTS (HTTP Strict Transport Security): forzar HTTPS
     app.UseHsts();
 }
 
+// Redirigir peticiones HTTP a HTTPS (seguridad)
 app.UseHttpsRedirection();
+
+// Servir archivos estáticos (CSS, JS, imágenes) desde wwwroot
 app.UseStaticFiles();
 
+// Habilitar enrutamiento de peticiones a controladores
 app.UseRouting();
 
 // IMPORTANTE: Session debe ir antes de UseAuthorization
@@ -138,10 +179,22 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// Habilitar autorización (verifica permisos basados en los claims)
 app.UseAuthorization();
+
+// ============================================
+// CONFIGURACIÓN DE RUTAS
+// ============================================
+// Define cómo se mapean las URLs a controladores y acciones
+// Patrón: /{controller}/{action}/{id?}
+// Ejemplo: /EscenaCrimen/Index/5 -> EscenaCrimenController.Index(5)
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// ============================================
+// INICIAR LA APLICACIÓN
+// ============================================
+// La aplicación comienza a escuchar peticiones HTTP
 app.Run();

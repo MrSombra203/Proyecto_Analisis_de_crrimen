@@ -15,12 +15,12 @@
             <div class="scene-selectors">
                 <div class="scene-box">
                     <label class="scene-label">Escena Base</label>
-                    @Html.DropDownList("escenaBaseId", (SelectList)ViewBag.Escenas, "--- Seleccionar escena ---", new { @class = "form-control scene-select" })
+                    @Html.DropDownList("escenaBaseId", (SelectList)ViewBag.Escenas, "--- Seleccionar escena ---", new { @class = "form-control scene-select", id = "escenaBaseId" })
                 </div>
 
                 <div class="scene-box">
                     <label class="scene-label">Escena para Comparación</label>
-                    @Html.DropDownList("escenaComparadaId", (SelectList)ViewBag.Escenas, "--- Seleccionar escena ---", new { @class = "form-control scene-select" })
+                    @Html.DropDownList("escenaComparadaId", (SelectList)ViewBag.Escenas, "--- Seleccionar escena ---", new { @class = "form-control scene-select", id = "escenaComparadaId" })
                 </div>
             </div>
 
@@ -176,11 +176,96 @@
         }
 
     @@media (max-width: 768px) {
-        .scene-selectors
-
-    {
-        grid-template-columns: 1fr;
-    }
-
+        .scene-selectors {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
+
+<script>
+    // Validación para evitar que se seleccione la misma escena en ambos dropdowns
+    document.addEventListener('DOMContentLoaded', function () {
+        var escenaBaseSelect = document.getElementById('escenaBaseId');
+        var escenaComparadaSelect = document.getElementById('escenaComparadaId');
+
+        // Función para actualizar las opciones disponibles en el otro dropdown
+        function actualizarOpcionesDisponibles() {
+            var escenaBaseId = escenaBaseSelect.value;
+            var escenaComparadaId = escenaComparadaSelect.value;
+
+            // Si hay una escena seleccionada en el dropdown base, deshabilitarla en el otro
+            if (escenaBaseId) {
+                for (var i = 0; i < escenaComparadaSelect.options.length; i++) {
+                    var option = escenaComparadaSelect.options[i];
+                    if (option.value === escenaBaseId && option.value !== '') {
+                        option.disabled = true;
+                        option.style.color = '#999';
+                    } else if (option.value !== escenaComparadaId) {
+                        option.disabled = false;
+                        option.style.color = '';
+                    }
+                }
+            } else {
+                // Si no hay selección en el base, habilitar todas las opciones en el comparado
+                for (var i = 0; i < escenaComparadaSelect.options.length; i++) {
+                    escenaComparadaSelect.options[i].disabled = false;
+                    escenaComparadaSelect.options[i].style.color = '';
+                }
+            }
+
+            // Si hay una escena seleccionada en el dropdown comparado, deshabilitarla en el otro
+            if (escenaComparadaId) {
+                for (var i = 0; i < escenaBaseSelect.options.length; i++) {
+                    var option = escenaBaseSelect.options[i];
+                    if (option.value === escenaComparadaId && option.value !== '') {
+                        option.disabled = true;
+                        option.style.color = '#999';
+                    } else if (option.value !== escenaBaseId) {
+                        option.disabled = false;
+                        option.style.color = '';
+                    }
+                }
+            } else {
+                // Si no hay selección en el comparado, habilitar todas las opciones en el base
+                for (var i = 0; i < escenaBaseSelect.options.length; i++) {
+                    escenaBaseSelect.options[i].disabled = false;
+                    escenaBaseSelect.options[i].style.color = '';
+                }
+            }
+        }
+
+        // Event listeners para cuando cambie la selección en cualquiera de los dos dropdowns
+        escenaBaseSelect.addEventListener('change', function () {
+            // Si se selecciona la misma escena que ya está en el otro dropdown, mostrar alerta
+            if (escenaBaseSelect.value === escenaComparadaSelect.value && escenaBaseSelect.value !== '') {
+                alert('No puede seleccionar la misma escena en ambos campos. Por favor seleccione escenas diferentes.');
+                escenaBaseSelect.value = '';
+            }
+            actualizarOpcionesDisponibles();
+        });
+
+        escenaComparadaSelect.addEventListener('change', function () {
+            // Si se selecciona la misma escena que ya está en el otro dropdown, mostrar alerta
+            if (escenaComparadaSelect.value === escenaBaseSelect.value && escenaComparadaSelect.value !== '') {
+                alert('No puede seleccionar la misma escena en ambos campos. Por favor seleccione escenas diferentes.');
+                escenaComparadaSelect.value = '';
+            }
+            actualizarOpcionesDisponibles();
+        });
+
+        // Validación antes de enviar el formulario
+        var form = document.querySelector('form');
+        form.addEventListener('submit', function (e) {
+            if (escenaBaseSelect.value === escenaComparadaSelect.value || 
+                escenaBaseSelect.value === '' || 
+                escenaComparadaSelect.value === '') {
+                e.preventDefault();
+                alert('Por favor seleccione dos escenas diferentes para comparar.');
+                return false;
+            }
+        });
+
+        // Inicializar al cargar la página
+        actualizarOpcionesDisponibles();
+    });
+</script>

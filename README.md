@@ -209,7 +209,6 @@ Proyecto_Analisis_de_crrimen/
 │   ├── AuthController.cs            # Autenticación
 │   ├── CatalogosController.cs       # Gestión de catálogos
 │   ├── UsuariosController.cs        # Gestión de usuarios
-│   ├── DiagnosticoController.cs     # Herramientas de diagnóstico
 │   └── HomeController.cs            # Página principal
 │
 ├── Models/                   # Modelos de datos
@@ -344,10 +343,6 @@ Usuario (N) ──→ (1) Rol
    - Crear, editar y desactivar usuarios
    - Asignación de roles
    - Validación de emails y nombres de usuario únicos
-
-4. **Herramientas de Diagnóstico**
-   - Verificación de usuarios y contraseñas
-   - Información del sistema
 
 ---
 

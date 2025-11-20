@@ -7,128 +7,58 @@ using Proyecto_Analisis_de_crimen.Attributes;
 
 namespace Proyecto_Analisis_de_crimen.Controllers
 {
-    [RequireAdmin] // Solo administradores pueden gestionar usuarios
+    // Controlador para gestionar usuarios del sistema
+    // Solo los administradores pueden acceder aquí
+    [RequireAdmin]
     public class UsuariosController : Controller
     {
+        // Constantes que usamos en las validaciones
+        private const int LONGITUD_MINIMA_PASSWORD = 6;
+        private const string PATRON_EMAIL = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+
         private readonly ApplicationDbContext _context;
         private readonly AuthenticationService _authService;
 
+        // Constructor con inyección de dependencias
         public UsuariosController(ApplicationDbContext context, AuthenticationService authService)
         {
             _context = context;
             _authService = authService;
         }
 
-        // Verificar si el usuario es administrador
-        private bool IsAdmin()
-        {
-            var rolId = HttpContext.Session.GetInt32("RolId");
-            return rolId == 1; // 1 = Administrador
-        }
-
-        // GET: Usuarios
+        // Muestra la lista de todos los usuarios, ordenados por nombre
         public async Task<IActionResult> Index()
         {
-            if (!IsAdmin())
-            {
-                TempData["Error"] = "No tiene permisos para acceder a esta sección";
-                return RedirectToAction("AccessDenied", "Auth");
-            }
-
             var usuarios = await _context.Usuarios
-                .Include(u => u.Rol)
+                .Include(u => u.Rol)  // Traemos también el rol de cada usuario
                 .OrderBy(u => u.NombreUsuario)
                 .ToListAsync();
+            
             return View(usuarios);
         }
 
-        // GET: Usuarios/Crear
+        // Muestra el formulario para crear un nuevo usuario
         public async Task<IActionResult> Crear()
         {
-            if (!IsAdmin())
-            {
-                TempData["Error"] = "No tiene permisos para crear usuarios";
-                return RedirectToAction("AccessDenied", "Auth");
-            }
-
             await CargarRolesEnViewBag();
             return View();
         }
 
-        // POST: Usuarios/Crear
+        // Procesa el formulario cuando se crea un nuevo usuario
+        // Validamos que el nombre de usuario y email sean únicos, y que la contraseña tenga al menos 6 caracteres
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Crear(Usuario usuario)
         {
-            if (!IsAdmin())
-            {
-                TempData["Error"] = "No tiene permisos para crear usuarios";
-                return RedirectToAction("AccessDenied", "Auth");
-            }
-
-            // Validar nombre de usuario único
-            if (await _authService.UsuarioExisteAsync(usuario.NombreUsuario))
-            {
-                ModelState.AddModelError("NombreUsuario", "Este nombre de usuario ya está en uso");
-            }
-
-            // VALIDACIÓN BACK-END DATO SENSIBLE: Email - Validación robusta antes de guardar
-            if (string.IsNullOrWhiteSpace(usuario.Email))
-            {
-                ModelState.AddModelError("Email", "El correo electrónico es obligatorio");
-            }
-            else
-            {
-                // Validar formato de email con expresión regular (validación back-end)
-                var emailRegex = new System.Text.RegularExpressions.Regex(
-                    @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                
-                if (!emailRegex.IsMatch(usuario.Email.Trim()))
-                {
-                    ModelState.AddModelError("Email", "El formato del correo electrónico no es válido");
-                }
-                else
-                {
-                    // Validar email único en BD (validación back-end)
-                    if (await _authService.EmailExisteAsync(usuario.Email))
-                    {
-                        ModelState.AddModelError("Email", "Este email ya está en uso");
-                    }
-                }
-            }
-
-            // Validar contraseña
-            if (string.IsNullOrWhiteSpace(usuario.Password) || usuario.Password.Length < 6)
-            {
-                ModelState.AddModelError("Password", "La contraseña debe tener al menos 6 caracteres");
-            }
-
-            // Validar que el RolId exista
-            if (usuario.RolId > 0)
-            {
-                var rolExiste = await _context.Roles.AnyAsync(r => r.Id == usuario.RolId);
-                if (!rolExiste)
-                {
-                    ModelState.AddModelError("RolId", "El rol seleccionado no existe");
-                }
-            }
+            // Validamos todo antes de guardar
+            await ValidarUsuario(usuario);
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Crear nueva instancia sin propiedades de navegación para evitar problemas
-                    var nuevoUsuario = new Usuario
-                    {
-                        NombreUsuario = usuario.NombreUsuario?.Trim() ?? "",
-                        Email = usuario.Email?.Trim() ?? "",
-                        Password = usuario.Password, // Texto plano según la BD
-                        NombreCompleto = usuario.NombreCompleto?.Trim() ?? "",
-                        RolId = usuario.RolId,
-                        Activo = usuario.Activo,
-                        FechaCreacion = DateTime.Now
-                    };
+                    // Creamos una nueva instancia limpia para evitar problemas con las propiedades de navegación
+                    var nuevoUsuario = CrearNuevoUsuario(usuario);
 
                     _context.Usuarios.Add(nuevoUsuario);
                     await _context.SaveChangesAsync();
@@ -138,12 +68,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 }
                 catch (DbUpdateException dbEx)
                 {
-                    var errorMessage = "Error al guardar en la base de datos: " + dbEx.Message;
-                    if (dbEx.InnerException != null)
-                    {
-                        errorMessage += " | Detalles: " + dbEx.InnerException.Message;
-                    }
-                    ModelState.AddModelError("", errorMessage);
+                    ManejarErrorBaseDatos(dbEx, "guardar");
                 }
                 catch (Exception ex)
                 {
@@ -155,15 +80,9 @@ namespace Proyecto_Analisis_de_crimen.Controllers
             return View(usuario);
         }
 
-        // GET: Usuarios/Editar/5
+        // Muestra el formulario de edición con los datos del usuario
         public async Task<IActionResult> Editar(int id)
         {
-            if (!IsAdmin())
-            {
-                TempData["Error"] = "No tiene permisos para editar usuarios";
-                return RedirectToAction("AccessDenied", "Auth");
-            }
-
             var usuario = await _context.Usuarios
                 .Include(u => u.Rol)
                 .FirstOrDefaultAsync(u => u.Id == id);
@@ -173,87 +92,33 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 return NotFound();
             }
 
-            // No mostrar la contraseña actual por seguridad
+            // Por seguridad, no mostramos la contraseña actual
             usuario.Password = "";
 
             await CargarRolesEnViewBag(usuario.RolId);
             return View(usuario);
         }
 
-        // POST: Usuarios/Editar/5
+        // Procesa el formulario cuando se edita un usuario
+        // La contraseña solo se actualiza si se proporciona una nueva, si no, se mantiene la anterior
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Editar(int id, Usuario usuario)
         {
-            if (!IsAdmin())
-            {
-                TempData["Error"] = "No tiene permisos para editar usuarios";
-                return RedirectToAction("AccessDenied", "Auth");
-            }
-
+            // Verificamos que el ID coincida
             if (id != usuario.Id)
             {
                 return NotFound();
             }
 
-            // Validar nombre de usuario único (excluyendo el actual)
-            if (await _authService.UsuarioExisteAsync(usuario.NombreUsuario, id))
-            {
-                ModelState.AddModelError("NombreUsuario", "Este nombre de usuario ya está en uso");
-            }
+            // Validamos, pero excluimos el usuario actual de las validaciones de unicidad
+            await ValidarUsuario(usuario, id);
 
-            // 🚨 VALIDACIÓN BACK-END DATO SENSIBLE: Email - Validación robusta antes de guardar
-            if (string.IsNullOrWhiteSpace(usuario.Email))
+            // Validar y procesar contraseña
+            string? nuevaPassword = ObtenerPasswordParaActualizar(usuario);
+            if (!string.IsNullOrWhiteSpace(nuevaPassword) && nuevaPassword.Length < LONGITUD_MINIMA_PASSWORD)
             {
-                ModelState.AddModelError("Email", "El correo electrónico es obligatorio");
-            }
-            else
-            {
-                // Validar formato de email con expresión regular (validación back-end)
-                var emailRegex = new System.Text.RegularExpressions.Regex(
-                    @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-                
-                if (!emailRegex.IsMatch(usuario.Email.Trim()))
-                {
-                    ModelState.AddModelError("Email", "El formato del correo electrónico no es válido");
-                }
-                else
-                {
-                    // Validar email único en BD excluyendo el actual (validación back-end)
-                    if (await _authService.EmailExisteAsync(usuario.Email, id))
-                    {
-                        ModelState.AddModelError("Email", "Este email ya está en uso");
-                    }
-                }
-            }
-
-            // Validar que el RolId exista
-            if (usuario.RolId > 0)
-            {
-                var rolExiste = await _context.Roles.AnyAsync(r => r.Id == usuario.RolId);
-                if (!rolExiste)
-                {
-                    ModelState.AddModelError("RolId", "El rol seleccionado no existe");
-                }
-            }
-
-            // Usar NuevaPassword si está disponible, sino usar Password
-            string? nuevaPassword = usuario.NuevaPassword;
-            if (string.IsNullOrWhiteSpace(nuevaPassword))
-            {
-                nuevaPassword = usuario.Password; // Fallback a Password si NuevaPassword está vacío
-            }
-
-            // Remover validación de Password si está vacío (no se cambia)
-            if (string.IsNullOrWhiteSpace(nuevaPassword))
-            {
-                ModelState.Remove("Password");
-                ModelState.Remove("NuevaPassword");
-            }
-            else if (nuevaPassword.Length < 6)
-            {
-                ModelState.AddModelError("NuevaPassword", "La contraseña debe tener al menos 6 caracteres");
+                ModelState.AddModelError("NuevaPassword", $"La contraseña debe tener al menos {LONGITUD_MINIMA_PASSWORD} caracteres");
             }
 
             if (ModelState.IsValid)
@@ -266,18 +131,8 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                         return NotFound();
                     }
 
-                    // Actualizar propiedades sin tocar la propiedad de navegación
-                    usuarioExistente.NombreUsuario = usuario.NombreUsuario?.Trim() ?? "";
-                    usuarioExistente.Email = usuario.Email?.Trim() ?? "";
-                    usuarioExistente.NombreCompleto = usuario.NombreCompleto?.Trim() ?? "";
-                    usuarioExistente.RolId = usuario.RolId;
-                    usuarioExistente.Activo = usuario.Activo;
-
-                    // Actualizar contraseña solo si se proporcionó una nueva
-                    if (!string.IsNullOrWhiteSpace(nuevaPassword))
-                    {
-                        usuarioExistente.Password = nuevaPassword;
-                    }
+                    // Actualizar propiedades del usuario
+                    ActualizarPropiedadesUsuario(usuarioExistente, usuario, nuevaPassword);
 
                     await _context.SaveChangesAsync();
 
@@ -286,12 +141,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 }
                 catch (DbUpdateException dbEx)
                 {
-                    var errorMessage = "Error al guardar en la base de datos: " + dbEx.Message;
-                    if (dbEx.InnerException != null)
-                    {
-                        errorMessage += " | Detalles: " + dbEx.InnerException.Message;
-                    }
-                    ModelState.AddModelError("", errorMessage);
+                    ManejarErrorBaseDatos(dbEx, "actualizar");
                 }
                 catch (Exception ex)
                 {
@@ -303,24 +153,20 @@ namespace Proyecto_Analisis_de_crimen.Controllers
             return View(usuario);
         }
 
-        // POST: Usuarios/Desactivar/5
+        // Activa o desactiva un usuario (cambia su estado)
+        // Un usuario desactivado no puede iniciar sesión
+        // No permitimos que un usuario se desactive a sí mismo
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Desactivar(int id)
         {
-            if (!IsAdmin())
-            {
-                TempData["Error"] = "No tiene permisos para esta acción";
-                return RedirectToAction("AccessDenied", "Auth");
-            }
-
             var usuario = await _context.Usuarios.FindAsync(id);
             if (usuario == null)
             {
                 return NotFound();
             }
 
-            // No permitir desactivar a sí mismo
+            // No permitimos que se desactive a sí mismo
             var currentUserId = HttpContext.Session.GetInt32("UserId");
             if (currentUserId == id)
             {
@@ -328,13 +174,22 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            // Cambiamos el estado (si estaba activo, lo desactivamos y viceversa)
             usuario.Activo = !usuario.Activo;
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = $"Usuario '{usuario.NombreUsuario}' {(usuario.Activo ? "activado" : "desactivado")} exitosamente";
+            string estado = usuario.Activo ? "activado" : "desactivado";
+            TempData["Success"] = $"Usuario '{usuario.NombreUsuario}' {estado} exitosamente";
+            
             return RedirectToAction(nameof(Index));
         }
 
+        // ============================================
+        // Métodos auxiliares
+        // ============================================
+
+        // Carga los roles disponibles en el ViewBag para mostrarlos en los dropdowns
+        // Si se pasa un rolSeleccionado, ese será el que aparezca seleccionado (útil al editar)
         private async Task CargarRolesEnViewBag(int? rolSeleccionado = null)
         {
             ViewBag.Roles = new SelectList(
@@ -343,6 +198,133 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 "Nombre",
                 rolSeleccionado
             );
+        }
+
+        // Valida todos los datos del usuario antes de guardarlo
+        // Verifica que el nombre de usuario y email sean únicos, que la contraseña tenga al menos 6 caracteres, y que el rol exista
+        // Si se pasa excludeId, excluimos ese usuario de las validaciones de unicidad (útil al editar)
+        private async Task ValidarUsuario(Usuario usuario, int? excludeId = null)
+        {
+            // Verificamos que el nombre de usuario no esté en uso
+            if (await _authService.UsuarioExisteAsync(usuario.NombreUsuario, excludeId))
+            {
+                ModelState.AddModelError("NombreUsuario", "Este nombre de usuario ya está en uso");
+            }
+
+            // Validamos el email
+            ValidarEmail(usuario.Email, excludeId);
+
+            // La contraseña solo se valida al crear, no al editar (a menos que se esté cambiando)
+            if (!excludeId.HasValue)
+            {
+                if (string.IsNullOrWhiteSpace(usuario.Password) || usuario.Password.Length < LONGITUD_MINIMA_PASSWORD)
+                {
+                    ModelState.AddModelError("Password", $"La contraseña debe tener al menos {LONGITUD_MINIMA_PASSWORD} caracteres");
+                }
+            }
+
+            // Verificamos que el rol que seleccionó realmente exista
+            if (usuario.RolId > 0)
+            {
+                var rolExiste = await _context.Roles.AnyAsync(r => r.Id == usuario.RolId);
+                if (!rolExiste)
+                {
+                    ModelState.AddModelError("RolId", "El rol seleccionado no existe");
+                }
+            }
+        }
+
+        // Valida que el email tenga un formato válido y que no esté en uso
+        private async Task ValidarEmail(string email, int? excludeId = null)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                ModelState.AddModelError("Email", "El correo electrónico es obligatorio");
+                return;
+            }
+
+            // Verificamos el formato con una expresión regular
+            var emailRegex = new System.Text.RegularExpressions.Regex(
+                PATRON_EMAIL,
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            if (!emailRegex.IsMatch(email.Trim()))
+            {
+                ModelState.AddModelError("Email", "El formato del correo electrónico no es válido");
+                return;
+            }
+
+            // Verificamos que no esté en uso por otro usuario
+            if (await _authService.EmailExisteAsync(email, excludeId))
+            {
+                ModelState.AddModelError("Email", "Este email ya está en uso");
+            }
+        }
+
+        // Crea un nuevo objeto Usuario limpio con los datos del formulario
+        // Lo hacemos así para evitar problemas con las propiedades de navegación que vienen del binding
+        private Usuario CrearNuevoUsuario(Usuario usuario)
+        {
+            return new Usuario
+            {
+                NombreUsuario = usuario.NombreUsuario?.Trim() ?? "",
+                Email = usuario.Email?.Trim() ?? "",
+                Password = usuario.Password,  // Nota: las contraseñas se guardan en texto plano según el diseño de la BD
+                NombreCompleto = usuario.NombreCompleto?.Trim() ?? "",
+                RolId = usuario.RolId,
+                Activo = usuario.Activo,
+                FechaCreacion = DateTime.Now
+            };
+        }
+
+        // Determina qué contraseña usar al actualizar
+        // Si hay una NuevaPassword, usamos esa; si no, usamos Password; si ambas están vacías, retornamos null (no se cambia)
+        private string? ObtenerPasswordParaActualizar(Usuario usuario)
+        {
+            string? nuevaPassword = usuario.NuevaPassword;
+            
+            if (string.IsNullOrWhiteSpace(nuevaPassword))
+            {
+                nuevaPassword = usuario.Password;
+            }
+
+            // Si no hay contraseña nueva, removemos las validaciones de contraseña
+            if (string.IsNullOrWhiteSpace(nuevaPassword))
+            {
+                ModelState.Remove("Password");
+                ModelState.Remove("NuevaPassword");
+                return null;
+            }
+
+            return nuevaPassword;
+        }
+
+        // Actualiza las propiedades del usuario existente con los nuevos valores del formulario
+        private void ActualizarPropiedadesUsuario(Usuario usuarioExistente, Usuario usuarioNuevo, string? nuevaPassword)
+        {
+            usuarioExistente.NombreUsuario = usuarioNuevo.NombreUsuario?.Trim() ?? "";
+            usuarioExistente.Email = usuarioNuevo.Email?.Trim() ?? "";
+            usuarioExistente.NombreCompleto = usuarioNuevo.NombreCompleto?.Trim() ?? "";
+            usuarioExistente.RolId = usuarioNuevo.RolId;
+            usuarioExistente.Activo = usuarioNuevo.Activo;
+
+            // Solo actualizamos la contraseña si se proporcionó una nueva
+            if (!string.IsNullOrWhiteSpace(nuevaPassword))
+            {
+                usuarioExistente.Password = nuevaPassword;
+            }
+        }
+
+        // Maneja los errores de base de datos de forma consistente
+        // Muestra el mensaje de error y los detalles si están disponibles
+        private void ManejarErrorBaseDatos(DbUpdateException dbEx, string operacion)
+        {
+            var errorMessage = $"Error al {operacion} en la base de datos: {dbEx.Message}";
+            if (dbEx.InnerException != null)
+            {
+                errorMessage += " | Detalles: " + dbEx.InnerException.Message;
+            }
+            ModelState.AddModelError("", errorMessage);
         }
     }
 }
