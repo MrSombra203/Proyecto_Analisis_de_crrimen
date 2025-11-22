@@ -51,7 +51,7 @@
                                 <div class="activity-icon">📝</div>
                                 <div class="activity-details">
                                     <div class="activity-text">
-                                        Escena #@escena.Id registrada - @escena.TipoCrimen en @escena.AreaGeografica
+                                        Escena #@escena.Id registrada - @(escena.TipoCrimen?.Nombre ?? "N/A") en @escena.AreaGeografica
                                     </div>
                                     <div class="activity-time">
                                         @{

@@ -18,7 +18,7 @@
                 <div class="base-scene-details">
                     <span><strong>Fecha:</strong> @escenaBase.FechaCrimen.ToString("dd/MM/yyyy HH:mm")</span>
                     <span><strong>Ubicación:</strong> @escenaBase.Ubicacion</span>
-                    <span><strong>Tipo:</strong> @escenaBase.TipoCrimen</span>
+                    <span><strong>Tipo:</strong> @(escenaBase.TipoCrimen?.Nombre ?? "N/A")</span>
                     <span><strong>Área:</strong> @escenaBase.AreaGeografica</span>
                 </div>
             </div>
@@ -38,7 +38,7 @@
                     <div class="result-card">
                         <div class="result-card-header">
                             <div class="result-title">
-                                Escena #@resultado.EscenaComparada.Id - @resultado.EscenaComparada.TipoCrimen
+                                Escena #@resultado.EscenaComparada.Id - @(resultado.EscenaComparada.TipoCrimen?.Nombre ?? "N/A")
                             </div>
                             <span class="classification-badge @badgeClass">@clasificacionTexto</span>
                         </div>
@@ -52,7 +52,7 @@
                                 <p><strong>Fecha:</strong> @resultado.EscenaComparada.FechaCrimen.ToString("dd/MM/yyyy HH:mm")</p>
                                 <p><strong>Ubicación:</strong> @resultado.EscenaComparada.Ubicacion</p>
                                 <p><strong>Área:</strong> @resultado.EscenaComparada.AreaGeografica</p>
-                                <p><strong>Modus Operandi:</strong> @resultado.EscenaComparada.ModusOperandi</p>
+                                <p><strong>Modus Operandi:</strong> @(resultado.EscenaComparada.ModusOperandi?.Nombre ?? "N/A")</p>
                             </div>
 
                             @if (resultado.Coincidencias.Any())

@@ -4,18 +4,12 @@ using Proyecto_Analisis_de_crimen.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ============================================
 // REGISTRO DE SERVICIOS
-// ============================================
 
-// Registrar el servicio de controladores y vistas (MVC)
-// Esto permite que la aplicación use el patrón Model-View-Controller
+// MVC: Controladores y vistas
 builder.Services.AddControllersWithViews();
 
-// ============================================
-// CONFIGURACIÓN DE BASE DE DATOS (Entity Framework Core)
-// ============================================
-// Obtener la cadena de conexión desde appsettings.json
+// BASE DE DATOS: Entity Framework Core con SQL Server
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrEmpty(connectionString))
 {
@@ -42,56 +36,37 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }
 });
 
-// Registrar el servicio de comparaci�n (CORE del sistema)
+// SERVICIOS PERSONALIZADOS
 builder.Services.AddScoped<ComparacionService>();
-
-// Registrar el servicio de autenticación
-// Maneja la validación de credenciales y verificación de usuarios
 builder.Services.AddScoped<Proyecto_Analisis_de_crimen.Services.AuthenticationService>();
 
-// ============================================
-// CONFIGURACIÓN DE SESIONES HTTP
-// ============================================
-// Las sesiones permiten almacenar información del usuario entre peticiones HTTP.
-// En este sistema, se usan para mantener el estado de autenticación.
-
+// SESIONES HTTP: Para mantener estado de autenticación entre peticiones
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(30);  // La sesión expira después de 30 min de inactividad
-    options.Cookie.HttpOnly = true;                  // Prevenir acceso desde JavaScript (protección XSS)
-    options.Cookie.IsEssential = true;               // Cookie esencial (no requiere consentimiento GDPR)
-    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;  // HTTPS si está disponible
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true; // Protección XSS
+    options.Cookie.IsEssential = true;
+    options.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
 });
 
-// ============================================
-// CONSTRUCCIÓN DE LA APLICACIÓN
-// ============================================
 var app = builder.Build();
 
-// ============================================
 // INICIALIZACIÓN DE BASE DE DATOS
-// ============================================
-// Verificar y crear la base de datos si no existe al iniciar la aplicación.
-// Esto es útil para desarrollo, pero en producción se recomienda usar migraciones.
-
+// Verifica conexión y crea BD/tablas si no existen (útil para desarrollo)
 try
 {
-    // Crear un scope para acceder a los servicios registrados
     using (var scope = app.Services.CreateScope())
     {
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         
-        // Intentar conectar a la base de datos
         var canConnect = context.Database.CanConnect();
         
         if (!canConnect)
         {
-            logger.LogWarning("No se pudo conectar a la base de datos. Intentando crear la base de datos...");
+            logger.LogWarning("No se pudo conectar a la base de datos. Intentando crear...");
             try
             {
-                // Crear la base de datos y las tablas si no existen
-                // EnsureCreatedAsync crea la BD y el esquema basado en los modelos
                 await context.Database.EnsureCreatedAsync();
                 logger.LogInformation("Base de datos creada exitosamente.");
             }
@@ -103,48 +78,31 @@ try
         else
         {
             logger.LogInformation("Conexión a la base de datos establecida correctamente.");
-            // Asegurar que las tablas existan (por si la BD existe pero no las tablas)
             await context.Database.EnsureCreatedAsync();
         }
     }
 }
 catch (Exception ex)
 {
-    // Si hay un error, registrarlo pero no detener la aplicación
-    // Esto permite que la app inicie aunque haya problemas con la BD
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
     logger.LogError(ex, "Error al verificar la conexión a la base de datos: {Message}", ex.Message);
-    // No detenemos la aplicación, solo registramos el error
 }
 
-// ============================================
-// CONFIGURACIÓN DEL PIPELINE HTTP
-// ============================================
-// El pipeline define el orden en que se procesan las peticiones HTTP.
-// El orden es CRÍTICO: cada middleware procesa la petición en secuencia.
+// PIPELINE HTTP (el orden es crítico)
 
-// Configurar manejo de errores según el ambiente
+// Manejo de errores (producción)
 if (!app.Environment.IsDevelopment())
 {
-    // En producción: usar página de error personalizada
     app.UseExceptionHandler("/Home/Error");
-    // HSTS (HTTP Strict Transport Security): forzar HTTPS
-    app.UseHsts();
+    app.UseHsts(); // Forzar HTTPS
 }
 
-// Redirigir peticiones HTTP a HTTPS (seguridad)
 app.UseHttpsRedirection();
-
-// Servir archivos estáticos (CSS, JS, imágenes) desde wwwroot
-app.UseStaticFiles();
-
-// Habilitar enrutamiento de peticiones a controladores
+app.UseStaticFiles(); // Archivos estáticos desde wwwroot
 app.UseRouting();
+app.UseSession(); // IMPORTANTE: Debe ir antes de UseAuthorization
 
-// IMPORTANTE: Session debe ir antes de UseAuthorization
-app.UseSession();
-
-// Middleware personalizado para autenticación basada en sesión
+// Middleware personalizado: Autenticación basada en sesión
 app.Use(async (context, next) =>
 {
     var session = context.Session;
@@ -163,14 +121,10 @@ app.Use(async (context, next) =>
         };
 
         if (rolId.HasValue)
-        {
             claims.Add(new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, rolId.Value.ToString()));
-        }
 
         if (!string.IsNullOrEmpty(rolNombre))
-        {
             claims.Add(new System.Security.Claims.Claim("RolNombre", rolNombre));
-        }
 
         var identity = new System.Security.Claims.ClaimsIdentity(claims, "Session");
         context.User = new System.Security.Claims.ClaimsPrincipal(identity);
@@ -179,22 +133,12 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// Habilitar autorización (verifica permisos basados en los claims)
 app.UseAuthorization();
 
-// ============================================
-// CONFIGURACIÓN DE RUTAS
-// ============================================
-// Define cómo se mapean las URLs a controladores y acciones
+// RUTAS: Mapeo de URLs a controladores
 // Patrón: /{controller}/{action}/{id?}
-// Ejemplo: /EscenaCrimen/Index/5 -> EscenaCrimenController.Index(5)
-
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// ============================================
-// INICIAR LA APLICACIÓN
-// ============================================
-// La aplicación comienza a escuchar peticiones HTTP
 app.Run();

@@ -43,7 +43,7 @@
                     </tr>
                     <tr>
                         <th>Tipo:</th>
-                        <td>@Model.EscenaBase.TipoCrimen</td>
+                        <td>@(Model.EscenaBase.TipoCrimen?.Nombre ?? "N/A")</td>
                     </tr>
                     <tr>
                         <th>Área:</th>
@@ -51,7 +51,7 @@
                     </tr>
                     <tr>
                         <th>Modus Operandi:</th>
-                        <td>@Model.EscenaBase.ModusOperandi</td>
+                        <td>@(Model.EscenaBase.ModusOperandi?.Nombre ?? "N/A")</td>
                     </tr>
                     <tr>
                         <th>Horario:</th>
@@ -77,7 +77,7 @@
                     </tr>
                     <tr>
                         <th>Tipo:</th>
-                        <td>@Model.EscenaComparada.TipoCrimen</td>
+                        <td>@(Model.EscenaComparada.TipoCrimen?.Nombre ?? "N/A")</td>
                     </tr>
                     <tr>
                         <th>Área:</th>
@@ -85,7 +85,7 @@
                     </tr>
                     <tr>
                         <th>Modus Operandi:</th>
-                        <td>@Model.EscenaComparada.ModusOperandi</td>
+                        <td>@(Model.EscenaComparada.ModusOperandi?.Nombre ?? "N/A")</td>
                     </tr>
                     <tr>
                         <th>Horario:</th>

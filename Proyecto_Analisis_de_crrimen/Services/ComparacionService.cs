@@ -6,264 +6,243 @@ using Proyecto_Analisis_de_crimen.Models;
 namespace Proyecto_Analisis_de_crimen.Services
 {
     /// <summary>
-    /// Servicio principal del sistema que implementa el algoritmo de comparación de escenas de crímenes.
-    /// Este es el CORE del proyecto y utiliza un sistema de puntuación multi-criterio para determinar
-    /// el grado de similitud entre diferentes escenas delictivas.
+    /// Servicio CORE del sistema. Implementa el algoritmo de comparación multi-criterio
+    /// para calcular similitud entre escenas de crímenes y detectar series criminales.
     /// </summary>
     public class ComparacionService
     {
+        // PESOS DE CRITERIOS (suman 100 puntos)
+        private const double PESO_TIPO_CRIMEN = 25.0;        // Tipo de delito (muy importante)
+        private const double PESO_MODUS_OPERANDI = 25.0;     // Método operativo (muy importante)
+        private const double PESO_AREA_GEOGRAFICA = 20.0;    // Zona geográfica (importante)
+        private const double PESO_EVIDENCIAS = 15.0;         // Evidencias físicas (importante)
+        private const double PESO_HORARIO = 10.0;            // Horario del crimen (moderado)
+        private const double PESO_CARACTERISTICAS = 5.0;     // Características especiales (bajo)
+        
+        // UMBRALES DE CLASIFICACIÓN
+        private const double UMBRAL_CRIMEN_EN_SERIE = 75.0;  // ≥75% = Alta probabilidad
+        private const double UMBRAL_CONEXION_PROBABLE = 60.0; // ≥60% = Posible relación
+        
+        // CONFIGURACIÓN DE SERIES
+        private const double UMBRAL_SERIE_CRIMINAL = 75.0;
+        private const int MINIMO_ESCENAS_PARA_SERIE = 3;
+
         /// <summary>
-        /// Compara dos escenas de crímenes y calcula un porcentaje de similitud basado en múltiples criterios.
-        /// 
-        /// El algoritmo funciona mediante un sistema de puntuación donde cada criterio tiene un peso específico:
-        /// - Tipo de Crimen: 25 puntos (25% del total)
-        /// - Modus Operandi: 25 puntos (25% del total)
-        /// - Área Geográfica: 20 puntos (20% del total)
-        /// - Evidencias Físicas: 15 puntos (15% del total)
-        /// - Horario: 10 puntos (10% del total)
-        /// - Características Especiales: 5 puntos (5% del total)
-        /// 
-        /// Total: 100 puntos máximos
+        /// Compara dos escenas y calcula un porcentaje de similitud (0-100%).
+        /// Evalúa 6 criterios con pesos específicos. Retorna clasificación automática.
         /// </summary>
-        /// <param name="escenaBase">La escena de referencia para la comparación</param>
-        /// <param name="escenaComparada">La escena que se compara contra la base</param>
-        /// <returns>Un objeto ComparacionResultado con el porcentaje de similitud y clasificación</returns>
         public ComparacionResultado CompararEscenas(EscenaCrimen escenaBase, EscenaCrimen escenaComparada)
         {
-            // Inicializar el objeto resultado con las escenas a comparar
+            // Validaciones
+            if (escenaBase == null)
+                throw new ArgumentNullException(nameof(escenaBase));
+            
+            if (escenaComparada == null)
+                throw new ArgumentNullException(nameof(escenaComparada));
+
+            // Si es la misma escena, retornar 100% de similitud
+            if (escenaBase.Id > 0 && escenaComparada.Id > 0 && escenaBase.Id == escenaComparada.Id)
+            {
+                return new ComparacionResultado
+                {
+                    EscenaBase = escenaBase,
+                    EscenaComparada = escenaComparada,
+                    PorcentajeSimilitud = 100.0,
+                    Clasificacion = ClasificacionCrimen.CrimenEnSerie,
+                    Coincidencias = new List<string> { "Misma escena de crimen" }
+                };
+            }
+
             var resultado = new ComparacionResultado
             {
                 EscenaBase = escenaBase,
                 EscenaComparada = escenaComparada
             };
 
-            // Variables para acumular puntos durante la comparación
-            double puntosTotales = 0;    // Puntos obtenidos por coincidencias
-            double puntosMaximos = 0;    // Puntos máximos posibles (siempre 100)
+            double puntosTotales = 0.0;
+            const double puntosMaximos = 100.0;
 
-            // ============================================
-            // CRITERIO 1: TIPO DE CRIMEN (25 puntos)
-            // ============================================
-            // Si ambas escenas son del mismo tipo de crimen, es un indicador fuerte de conexión
-            puntosMaximos += 25;
-            if (escenaBase.TipoCrimenId == escenaComparada.TipoCrimenId)
+            // CRITERIO 1: Tipo de Crimen (25 puntos)
+            if (escenaBase.TipoCrimenId > 0 && escenaComparada.TipoCrimenId > 0 &&
+                escenaBase.TipoCrimenId == escenaComparada.TipoCrimenId)
             {
-                puntosTotales += 25;
+                puntosTotales += PESO_TIPO_CRIMEN;
                 resultado.Coincidencias.Add("Tipo de crimen coincidente");
             }
 
-            // ============================================
-            // CRITERIO 2: ÁREA GEOGRÁFICA (20 puntos)
-            // ============================================
-            // Los crímenes en la misma zona geográfica pueden estar relacionados
-            puntosMaximos += 20;
-            if (escenaBase.AreaGeografica == escenaComparada.AreaGeografica)
+            // CRITERIO 2: Modus Operandi (25 puntos)
+            if (escenaBase.ModusOperandiId > 0 && escenaComparada.ModusOperandiId > 0 &&
+                escenaBase.ModusOperandiId == escenaComparada.ModusOperandiId)
             {
-                puntosTotales += 20;
-                resultado.Coincidencias.Add("Área geográfica similar");
-            }
-
-            // ============================================
-            // CRITERIO 3: MODUS OPERANDI (25 puntos)
-            // ============================================
-            // El método utilizado es un indicador muy importante de autoría
-            puntosMaximos += 25;
-            if (escenaBase.ModusOperandiId == escenaComparada.ModusOperandiId)
-            {
-                puntosTotales += 25;
+                puntosTotales += PESO_MODUS_OPERANDI;
                 resultado.Coincidencias.Add("Modus operandi compatible");
             }
 
-            // ============================================
-            // CRITERIO 4: HORARIO DEL CRIMEN (10 puntos)
-            // ============================================
-            // Los criminales en serie suelen operar en horarios similares
-            puntosMaximos += 10;
+            // CRITERIO 3: Área Geográfica (20 puntos)
+            if (escenaBase.AreaGeografica == escenaComparada.AreaGeografica)
+            {
+                puntosTotales += PESO_AREA_GEOGRAFICA;
+                resultado.Coincidencias.Add("Área geográfica similar");
+            }
+
+            // CRITERIO 4: Horario (10 puntos)
             if (escenaBase.HorarioCrimen == escenaComparada.HorarioCrimen)
             {
-                puntosTotales += 10;
+                puntosTotales += PESO_HORARIO;
                 resultado.Coincidencias.Add("Horario similar");
             }
 
-            // ============================================
-            // CRITERIO 5: EVIDENCIAS FÍSICAS (15 puntos)
-            // ============================================
-            // Compara los tipos de evidencias encontradas usando el coeficiente de Jaccard
-            puntosMaximos += 15;
+            // CRITERIO 5: Evidencias Físicas (15 puntos) - Coeficiente de Jaccard
             double similitudEvidencias = CompararEvidencias(escenaBase.Evidencias, escenaComparada.Evidencias);
-            puntosTotales += similitudEvidencias * 15; // Multiplicar por el peso del criterio
-            if (similitudEvidencias > 0.5) // Si más del 50% de las evidencias coinciden
+            puntosTotales += similitudEvidencias * PESO_EVIDENCIAS;
+            
+            if (similitudEvidencias > 0.5)
             {
-                resultado.Coincidencias.Add("Evidencia física similar");
+                resultado.Coincidencias.Add($"Evidencia física similar ({Math.Round(similitudEvidencias * 100, 1)}%)");
+            }
+            else if (similitudEvidencias > 0)
+            {
+                resultado.Coincidencias.Add($"Alguna evidencia común ({Math.Round(similitudEvidencias * 100, 1)}%)");
             }
 
-            // ============================================
-            // CRITERIO 6: CARACTERÍSTICAS ESPECIALES (5 puntos)
-            // ============================================
-            // Evalúa características booleanas: violencia, planificación, múltiples perpetradores
-            puntosMaximos += 5;
-            int caracteristicasCoincidentes = 0;
-            int totalCaracteristicas = 3; // Total de características a evaluar
-
-            // Solo cuenta como coincidencia si AMBAS escenas tienen la característica activa
-            if (escenaBase.UsoViolencia == escenaComparada.UsoViolencia && escenaBase.UsoViolencia)
-                caracteristicasCoincidentes++;
+            // CRITERIO 6: Características Especiales (5 puntos)
+            // Considera coincidencias en true y false (violencia, planificación, múltiples perpetradores)
+            double puntosCaracteristicas = CalcularSimilitudCaracteristicas(escenaBase, escenaComparada);
+            puntosTotales += puntosCaracteristicas;
             
-            if (escenaBase.ActoPlanificado == escenaComparada.ActoPlanificado && escenaBase.ActoPlanificado)
-                caracteristicasCoincidentes++;
-            
-            if (escenaBase.MultiplesPerpetadores == escenaComparada.MultiplesPerpetadores && escenaBase.MultiplesPerpetadores)
-                caracteristicasCoincidentes++;
+            if (puntosCaracteristicas > 0)
+            {
+                resultado.Coincidencias.Add("Características especiales compatibles");
+            }
 
-            // Calcular puntos proporcionales: (coincidencias / total) * puntos máximos
-            puntosTotales += (caracteristicasCoincidentes / (double)totalCaracteristicas) * 5;
-
-            // ============================================
-            // CÁLCULO DEL PORCENTAJE DE SIMILITUD
-            // ============================================
-            // Fórmula: (puntos obtenidos / puntos máximos) * 100
+            // Calcular porcentaje de similitud
             resultado.PorcentajeSimilitud = Math.Round((puntosTotales / puntosMaximos) * 100, 2);
+            resultado.PorcentajeSimilitud = Math.Max(0, Math.Min(100, resultado.PorcentajeSimilitud));
 
-            // ============================================
-            // CLASIFICACIÓN DEL RESULTADO
-            // ============================================
-            // Basado en el porcentaje de similitud, clasificamos el resultado:
-            if (resultado.PorcentajeSimilitud >= 75)
-                resultado.Clasificacion = ClasificacionCrimen.CrimenEnSerie;      // Alta probabilidad de conexión
-            else if (resultado.PorcentajeSimilitud >= 60)
-                resultado.Clasificacion = ClasificacionCrimen.ConexionProbable;  // Posible relación
+            // Clasificar resultado
+            if (resultado.PorcentajeSimilitud >= UMBRAL_CRIMEN_EN_SERIE)
+                resultado.Clasificacion = ClasificacionCrimen.CrimenEnSerie;
+            else if (resultado.PorcentajeSimilitud >= UMBRAL_CONEXION_PROBABLE)
+                resultado.Clasificacion = ClasificacionCrimen.ConexionProbable;
             else
-                resultado.Clasificacion = ClasificacionCrimen.SimilitudBaja;     // Baja probabilidad
+                resultado.Clasificacion = ClasificacionCrimen.SimilitudBaja;
 
             return resultado;
         }
 
         /// <summary>
-        /// Compara dos colecciones de evidencias físicas usando el coeficiente de Jaccard.
-        /// 
-        /// El coeficiente de Jaccard mide la similitud entre dos conjuntos:
-        /// J(A,B) = |A ∩ B| / |A ∪ B|
-        /// 
-        /// Donde:
-        /// - A ∩ B = elementos comunes entre ambos conjuntos
-        /// - A ∪ B = todos los elementos únicos de ambos conjuntos
-        /// 
-        /// Ejemplo:
-        /// Escena A tiene: [Huellas, Sangre, Vidrio]
-        /// Escena B tiene: [Huellas, Vidrio, Fibras]
-        /// Coincidencias: [Huellas, Vidrio] = 2
-        /// Total único: [Huellas, Sangre, Vidrio, Fibras] = 4
-        /// Similitud = 2/4 = 0.5 (50%)
+        /// Calcula similitud de características especiales.
+        /// Cuenta coincidencias cuando ambas escenas tienen el mismo valor (true o false).
         /// </summary>
-        /// <param name="evidencias1">Primera colección de evidencias</param>
-        /// <param name="evidencias2">Segunda colección de evidencias</param>
-        /// <returns>Un valor entre 0 y 1 representando la similitud (0 = nada similar, 1 = idénticas)</returns>
-        private double CompararEvidencias(ICollection<Evidencia> evidencias1, ICollection<Evidencia> evidencias2)
+        private double CalcularSimilitudCaracteristicas(EscenaCrimen escenaBase, EscenaCrimen escenaComparada)
         {
-            // Validación: si alguna colección es nula o vacía, no hay similitud
-            if (evidencias1 == null || evidencias2 == null ||
-                evidencias1.Count == 0 || evidencias2.Count == 0)
-                return 0;
+            int coincidencias = 0;
+            const int total = 3;
 
-            // Extraer solo los tipos de evidencias (enum) de cada colección
-            var tipos1 = evidencias1.Select(e => e.TipoEvidencia).ToList();
-            var tipos2 = evidencias2.Select(e => e.TipoEvidencia).ToList();
+            if (escenaBase.UsoViolencia == escenaComparada.UsoViolencia) coincidencias++;
+            if (escenaBase.ActoPlanificado == escenaComparada.ActoPlanificado) coincidencias++;
+            if (escenaBase.MultiplesPerpetadores == escenaComparada.MultiplesPerpetadores) coincidencias++;
 
-            // Calcular intersección: tipos que aparecen en AMBAS colecciones
-            int coincidencias = tipos1.Intersect(tipos2).Count();
-            
-            // Calcular unión: todos los tipos únicos de ambas colecciones
-            int total = tipos1.Union(tipos2).Distinct().Count();
-
-            // Aplicar fórmula de Jaccard: coincidencias / total único
-            return (double)coincidencias / total;
+            return (coincidencias / (double)total) * PESO_CARACTERISTICAS;
         }
 
         /// <summary>
-        /// Busca todas las escenas similares a una escena base dentro de una colección de escenas.
-        /// 
-        /// Este método compara la escena base contra todas las demás escenas y retorna
-        /// solo aquellas que superen el umbral mínimo de similitud (por defecto 60%).
-        /// 
-        /// El resultado se ordena de mayor a menor similitud para facilitar el análisis.
+        /// Compara evidencias usando el coeficiente de Jaccard: J(A,B) = |A ∩ B| / |A ∪ B|
+        /// Retorna valor entre 0 (sin similitud) y 1 (idénticas).
         /// </summary>
-        /// <param name="escenaBase">La escena de referencia para buscar similares</param>
-        /// <param name="todasLasEscenas">Lista completa de escenas en el sistema</param>
-        /// <param name="umbralMinimo">Porcentaje mínimo de similitud requerido (default: 60%)</param>
-        /// <returns>Lista de resultados de comparación ordenados por similitud descendente</returns>
-        public List<ComparacionResultado> BuscarEscenasSimilares(EscenaCrimen escenaBase, List<EscenaCrimen> todasLasEscenas, double umbralMinimo = 60)
+        private double CompararEvidencias(ICollection<Evidencia> evidencias1, ICollection<Evidencia> evidencias2)
         {
-            var resultados = new List<ComparacionResultado>();
+            if (evidencias1 == null || evidencias2 == null)
+                return 0.0;
 
-            // Iterar sobre todas las escenas disponibles
+            if (evidencias1.Count == 0 && evidencias2.Count == 0)
+                return 1.0;
+
+            if (evidencias1.Count == 0 || evidencias2.Count == 0)
+                return 0.0;
+
+            // Usar HashSet para optimizar búsquedas O(1)
+            var tipos1 = new HashSet<TipoEvidencia>(evidencias1.Select(e => e.TipoEvidencia));
+            var tipos2 = new HashSet<TipoEvidencia>(evidencias2.Select(e => e.TipoEvidencia));
+
+            int coincidencias = tipos1.Intersect(tipos2).Count();
+            
+            var union = new HashSet<TipoEvidencia>(tipos1);
+            union.UnionWith(tipos2);
+            int total = union.Count;
+
+            return total == 0 ? 0.0 : (double)coincidencias / total;
+        }
+
+        /// <summary>
+        /// Busca escenas similares a una escena base que superen el umbral mínimo.
+        /// Retorna resultados ordenados por similitud descendente.
+        /// </summary>
+        public List<ComparacionResultado> BuscarEscenasSimilares(EscenaCrimen escenaBase, List<EscenaCrimen> todasLasEscenas, double umbralMinimo = 60.0)
+        {
+            if (escenaBase == null)
+                throw new ArgumentNullException(nameof(escenaBase));
+            
+            if (todasLasEscenas == null)
+                throw new ArgumentNullException(nameof(todasLasEscenas));
+
+            if (umbralMinimo < 0 || umbralMinimo > 100)
+                throw new ArgumentException("El umbral mínimo debe estar entre 0 y 100", nameof(umbralMinimo));
+
+            var resultados = new List<ComparacionResultado>();
+            int escenaBaseId = escenaBase.Id;
+
             foreach (var escena in todasLasEscenas)
             {
-                // Omitir la escena base (no se compara consigo misma)
-                if (escena.Id == escenaBase.Id) 
+                if (escena.Id == escenaBaseId)
                     continue;
 
-                // Realizar la comparación usando el algoritmo principal
                 var comparacion = CompararEscenas(escenaBase, escena);
 
-                // Solo agregar si supera el umbral mínimo de similitud
                 if (comparacion.PorcentajeSimilitud >= umbralMinimo)
                 {
                     resultados.Add(comparacion);
                 }
             }
 
-            // Ordenar por porcentaje de similitud descendente (las más similares primero)
             return resultados.OrderByDescending(r => r.PorcentajeSimilitud).ToList();
         }
 
         /// <summary>
-        /// Detecta grupos de crímenes que forman series criminales.
-        /// 
-        /// Un crimen en serie se define como un grupo de 3 o más crímenes relacionados
-        /// con un umbral de similitud del 75% o superior.
-        /// 
-        /// Algoritmo:
-        /// 1. Para cada escena no procesada, busca escenas similares (≥75% similitud)
-        /// 2. Si encuentra 2 o más escenas similares, forma un grupo (serie)
-        /// 3. Marca todas las escenas del grupo como procesadas para evitar duplicados
-        /// 4. Retorna todos los grupos detectados
-        /// 
-        /// Este método es útil para identificar patrones criminales que pueden indicar
-        /// un mismo autor o grupo de autores operando de manera sistemática.
+        /// Detecta grupos de crímenes que forman series (≥3 crímenes con ≥75% similitud).
+        /// Evita duplicados marcando escenas procesadas.
         /// </summary>
-        /// <param name="todasLasEscenas">Lista completa de escenas en el sistema</param>
-        /// <returns>Lista de grupos (series) donde cada grupo es una lista de escenas relacionadas</returns>
         public List<List<EscenaCrimen>> DetectarCrimenesEnSerie(List<EscenaCrimen> todasLasEscenas)
         {
-            var series = new List<List<EscenaCrimen>>();
-            var procesadas = new HashSet<int>(); // Para evitar procesar la misma escena múltiples veces
+            if (todasLasEscenas == null)
+                throw new ArgumentNullException(nameof(todasLasEscenas));
 
-            // Iterar sobre todas las escenas
+            if (todasLasEscenas.Count < MINIMO_ESCENAS_PARA_SERIE)
+                return new List<List<EscenaCrimen>>();
+
+            var series = new List<List<EscenaCrimen>>();
+            var procesadas = new HashSet<int>();
+
             foreach (var escena in todasLasEscenas)
             {
-                // Si ya fue procesada como parte de otra serie, omitirla
-                if (procesadas.Contains(escena.Id)) 
+                if (procesadas.Contains(escena.Id))
                     continue;
 
-                // Buscar escenas similares con umbral alto (75% = CrimenEnSerie)
-                var similares = BuscarEscenasSimilares(escena, todasLasEscenas, 75);
-
-                // Se requiere al menos 2 escenas similares para formar una serie
-                // (la escena base + 2 similares = mínimo 3 crímenes)
-                if (similares.Count >= 2)
+                var similares = BuscarEscenasSimilares(escena, todasLasEscenas, UMBRAL_SERIE_CRIMINAL);
+                int minimoRequerido = MINIMO_ESCENAS_PARA_SERIE - 1;
+                
+                if (similares.Count >= minimoRequerido)
                 {
-                    // Crear el grupo de serie: escena base + todas las similares
                     var serie = new List<EscenaCrimen> { escena };
                     serie.AddRange(similares.Select(s => s.EscenaComparada));
 
-                    // Marcar todas las escenas de esta serie como procesadas
-                    foreach (var e in serie)
+                    if (serie.Count >= MINIMO_ESCENAS_PARA_SERIE)
                     {
-                        procesadas.Add(e.Id);
-                    }
+                        foreach (var e in serie)
+                            procesadas.Add(e.Id);
 
-                    // Agregar la serie detectada a la lista de resultados
-                    series.Add(serie);
+                        series.Add(serie);
+                    }
                 }
             }
 
