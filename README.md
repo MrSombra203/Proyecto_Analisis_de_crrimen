@@ -16,8 +16,10 @@ Sistema web desarrollado en ASP.NET Core MVC para el registro, análisis y compa
 - [Funcionalidades](#funcionalidades)
 - [Algoritmo de Comparación](#algoritmo-de-comparación)
 - [Sistema de Autenticación](#sistema-de-autenticación)
+- [Interfaz de Usuario y Diseño](#interfaz-de-usuario-y-diseño)
 - [Configuración de Base de Datos](#configuración-de-base-de-datos)
 - [Uso del Sistema](#uso-del-sistema)
+- [Mejoras Técnicas Implementadas](#mejoras-técnicas-implementadas)
 
 ---
 
@@ -30,12 +32,16 @@ Este sistema permite a las autoridades y analistas de crímenes registrar escena
 ##  Características Principales
 
 - **Registro de Escenas de Crimen**: Captura detallada de información sobre crímenes incluyendo ubicación, fecha, tipo, modus operandi, evidencias y características adicionales
-- **Sistema de Comparación Inteligente**: Algoritmo que calcula el porcentaje de similitud entre escenas basado en múltiples criterios
+- **Sistema de Comparación Inteligente**: Algoritmo optimizado que calcula el porcentaje de similitud entre escenas basado en múltiples criterios con validaciones de integridad
 - **Detección de Crímenes en Serie**: Identificación automática de patrones que sugieren crímenes relacionados
+- **Autenticación Obligatoria**: Todas las funcionalidades principales requieren inicio de sesión para garantizar seguridad
+- **Validación de Comparaciones**: Sistema que previene la comparación de una escena consigo misma (client-side y server-side)
+- **Interfaz Unificada**: Esquema de colores consistente en toda la aplicación para una experiencia de usuario coherente
 - **Gestión de Catálogos**: Administración de tipos de crimen y modus operandi
 - **Sistema de Usuarios y Roles**: Control de acceso basado en roles (Administrador, Usuario)
 - **Dashboard Analítico**: Panel de control para administradores con estadísticas y detección de series
 - **Búsqueda de Escenas Similares**: Encuentra automáticamente casos relacionados con una escena base
+- **Código Documentado**: Comentarios concisos en todo el código para facilitar el mantenimiento y comprensión
 
 ---
 
@@ -43,14 +49,22 @@ Este sistema permite a las autoridades y analistas de crímenes registrar escena
 
 ### ComparacionService - El Corazón del Sistema
 
-El **`ComparacionService`** es el componente central del proyecto. Este servicio implementa la lógica de análisis criminal mediante un algoritmo de comparación multi-criterio que evalúa:
+El **`ComparacionService`** es el componente central del proyecto. Este servicio implementa la lógica de análisis criminal mediante un algoritmo de comparación multi-criterio optimizado y mejorado que evalúa:
 
-1. **Tipo de Crimen** (25 puntos):** Compara si ambas escenas pertenecen al mismo tipo de delito
-2. **Área Geográfica** (20 puntos):** Evalúa si ocurrieron en la misma zona geográfica
-3. **Modus Operandi** (25 puntos):** Analiza si el método utilizado es compatible
-4. **Horario del Crimen** (10 puntos):** Compara el momento del día en que ocurrieron
-5. **Evidencias Físicas** (15 puntos):** Calcula la similitud basada en tipos de evidencias encontradas
-6. **Características Adicionales** (5 puntos):** Evalúa uso de violencia, planificación, múltiples perpetradores
+1. **Tipo de Crimen** (25 puntos): Compara si ambas escenas pertenecen al mismo tipo de delito
+2. **Modus Operandi** (25 puntos): Analiza si el método utilizado es compatible
+3. **Área Geográfica** (20 puntos): Evalúa si ocurrieron en la misma zona geográfica
+4. **Evidencias Físicas** (15 puntos): Calcula la similitud basada en tipos de evidencias encontradas usando el coeficiente de Jaccard optimizado con `HashSet`
+5. **Horario del Crimen** (10 puntos): Compara el momento del día en que ocurrieron
+6. **Características Adicionales** (5 puntos): Evalúa uso de violencia, planificación, múltiples perpetradores considerando coincidencias tanto en valores `true` como `false`
+
+#### Mejoras Implementadas
+
+- **Constantes Definidas**: Los pesos de criterios y umbrales están definidos como constantes para facilitar ajustes futuros
+- **Validaciones Robustas**: Validación de parámetros nulos y verificación de escenas idénticas
+- **Optimización de Evidencias**: Uso de `HashSet` para comparación de evidencias con complejidad O(1) en lugar de O(n)
+- **Cálculo Mejorado de Características**: Evalúa coincidencias en ambos estados (true/false) para mayor precisión
+- **Umbrales Configurables**: Constantes para umbrales de clasificación (75% serie, 60% conexión probable)
 
 El algoritmo genera un **porcentaje de similitud** y clasifica los resultados en tres categorías:
 
@@ -64,19 +78,31 @@ El algoritmo genera un **porcentaje de similitud** y clasifica los resultados en
 ```csharp
 public ComparacionResultado CompararEscenas(EscenaCrimen escenaBase, EscenaCrimen escenaComparada)
 ```
-Compara dos escenas específicas y retorna un resultado detallado con porcentaje de similitud y lista de coincidencias.
+Compara dos escenas específicas y retorna un resultado detallado con porcentaje de similitud y lista de coincidencias. Incluye validación de escenas idénticas y manejo de casos especiales.
 
-#### 2. Búsqueda de Escenas Similares (`BuscarEscenasSimilares`)
+#### 2. Comparación de Evidencias (`CompararEvidencias`)
+```csharp
+private double CompararEvidencias(ICollection<Evidencia> evidencias1, ICollection<Evidencia> evidencias2)
+```
+Método privado optimizado que utiliza el **coeficiente de Jaccard** y `HashSet` para calcular similitud de evidencias con complejidad O(n) en lugar de O(n²).
+
+#### 3. Cálculo de Similitud de Características (`CalcularSimilitudCaracteristicas`)
+```csharp
+private double CalcularSimilitudCaracteristicas(EscenaCrimen escenaBase, EscenaCrimen escenaComparada)
+```
+Evalúa coincidencias en características especiales (violencia, planificación, múltiples perpetradores) considerando ambos valores booleanos (true y false).
+
+#### 4. Búsqueda de Escenas Similares (`BuscarEscenasSimilares`)
 ```csharp
 public List<ComparacionResultado> BuscarEscenasSimilares(EscenaCrimen escenaBase, List<EscenaCrimen> todasLasEscenas, double umbralMinimo = 60)
 ```
-Busca todas las escenas similares a una escena base, filtrando por un umbral mínimo de similitud (por defecto 60%).
+Busca todas las escenas similares a una escena base, filtrando por un umbral mínimo de similitud (por defecto 60%). Retorna resultados ordenados por similitud descendente.
 
-#### 3. Detección de Crímenes en Serie (`DetectarCrimenesEnSerie`)
+#### 5. Detección de Crímenes en Serie (`DetectarCrimenesEnSerie`)
 ```csharp
 public List<List<EscenaCrimen>> DetectarCrimenesEnSerie(List<EscenaCrimen> todasLasEscenas)
 ```
-Identifica grupos de crímenes que forman series, utilizando un umbral de 75% para considerar crímenes en serie.
+Identifica grupos de crímenes que forman series, utilizando un umbral de 75% y mínimo de 3 escenas para considerar crímenes en serie. Evita duplicados usando `HashSet`.
 
 ---
 
@@ -305,44 +331,64 @@ Usuario (N) ──→ (1) Rol
 
 ##  Funcionalidades
 
+### ⚠️ Autenticación Requerida
+
+**Todas las funcionalidades principales requieren inicio de sesión.** El sistema implementa atributos `[RequireAuth]` en todas las acciones sensibles para garantizar que solo usuarios autenticados puedan acceder.
+
+- Los usuarios no autenticados son redirigidos automáticamente al login
+- Después del login, se redirige al usuario a la página original que intentaba acceder
+- La página principal (`Home/Index`) muestra contenido dinámico según el estado de autenticación
+
 ### Para Todos los Usuarios Autenticados
 
-1. **Registrar Escena de Crimen**
-   - Formulario completo con validaciones
-   - Selección de tipo de crimen y modus operandi
+1. **Registrar Escena de Crimen** `[RequireAuth]`
+   - Formulario completo con validaciones front-end y back-end
+   - Selección de tipo de crimen y modus operandi (solo activos)
    - Selección múltiple de evidencias
    - Campos adicionales (violencia, planificación, etc.)
+   - Validación de integridad de datos y catálogos
 
-2. **Ver Lista de Escenas**
-   - Listado ordenado por fecha de registro
-   - Información resumida de cada escena
+2. **Ver Lista de Escenas** `[RequireAuth]`
+   - Listado ordenado por fecha de registro (más recientes primero)
+   - Información resumida de cada escena con relaciones cargadas
+   - Visualización correcta de nombres de TipoCrimen y ModusOperandi
+   - Enlaces a "Ver Similares" para cada escena
 
-3. **Comparar Escenas**
-   - Selección de dos escenas para comparar
-   - Visualización de resultados detallados
+3. **Comparar Escenas** `[RequireAuth]`
+   - Selección de dos escenas para comparar mediante dropdowns
+   - **Validación client-side y server-side** para prevenir selección de la misma escena en ambos campos
+   - JavaScript que deshabilita opciones ya seleccionadas en el otro dropdown
+   - Visualización de resultados detallados con formato mejorado
    - Porcentaje de similitud y lista de coincidencias
+   - Mostrado correcto de nombres de TipoCrimen y ModusOperandi
 
-4. **Buscar Escenas Similares**
-   - A partir de una escena base, encuentra todas las similares
+4. **Buscar Escenas Similares** `[RequireAuth]`
+   - A partir de una escena base, encuentra todas las similares (≥60% similitud)
    - Ordenadas por porcentaje de similitud descendente
+   - Visualización clara de resultados con información completa
 
 ### Solo para Administradores
 
-1. **Dashboard Analítico**
+1. **Dashboard Analítico** `[RequireAdmin]`
    - Estadísticas generales del sistema
    - Total de escenas registradas
    - Número de crímenes en serie detectados
-   - Últimas escenas registradas
+   - Últimas 5 escenas registradas con información completa
+   - Visualización correcta de nombres de TipoCrimen
 
-2. **Gestión de Catálogos**
+2. **Gestión de Catálogos** `[RequireAdmin]`
    - CRUD completo de Tipos de Crimen
    - CRUD completo de Modus Operandi
    - Activación/Desactivación de registros
+   - Validación de nombres únicos
+   - Los registros desactivados no aparecen en formularios de registro
 
-3. **Gestión de Usuarios**
+3. **Gestión de Usuarios** `[RequireAdmin]`
    - Crear, editar y desactivar usuarios
    - Asignación de roles
    - Validación de emails y nombres de usuario únicos
+   - Validación de formato de email con expresiones regulares
+   - Validación de longitud mínima de contraseñas
 
 ---
 
@@ -372,10 +418,27 @@ Porcentaje de Similitud = (Puntos Totales / Puntos Máximos) × 100
 
 ### Cálculo de Similitud de Evidencias
 
-La similitud de evidencias se calcula usando el **coeficiente de Jaccard**:
+La similitud de evidencias se calcula usando el **coeficiente de Jaccard** optimizado:
 
 ```
 Similitud = (Evidencias Comunes) / (Evidencias Totales Únicas)
+```
+
+**Optimización Implementada:**
+- Uso de `HashSet<TipoEvidencia>` para almacenar tipos de evidencias de cada escena
+- Operaciones de intersección y unión optimizadas con complejidad O(n) en lugar de O(n²)
+- Manejo de casos especiales: ambas vacías (100% similitud), una vacía (0% similitud)
+
+### Cálculo de Similitud de Características
+
+Las características especiales (violencia, planificación, múltiples perpetradores) se evalúan considerando coincidencias en ambos estados:
+
+- Coincidencia cuando ambas escenas tienen `true` en una característica
+- Coincidencia cuando ambas escenas tienen `false` en una característica
+- No hay coincidencia cuando los valores difieren
+
+```
+Puntos = (Coincidencias / Total de Características) × 5 puntos máximos
 ```
 
 ### Clasificación de Resultados
@@ -423,23 +486,47 @@ El sistema utiliza autenticación personalizada basada en sesiones HTTP:
 El sistema implementa dos atributos personalizados:
 
 1. **`[RequireAuth]`**: Requiere que el usuario esté autenticado
+   - Verifica `UserId` en la sesión
+   - Si no está autenticado, redirige al login guardando la URL original (`returnUrl`)
+   - Después del login exitoso, redirige al usuario a la página que intentaba acceder
+   - Implementado en todas las acciones de `EscenaCrimenController` (excepto Dashboard)
+
 2. **`[RequireAdmin]`**: Requiere rol de Administrador (RolId = 1)
+   - Verifica `RolId == 1` en la sesión
+   - Si no es administrador, redirige a la página de acceso denegado
+   - Usado en: Dashboard, gestión de catálogos, gestión de usuarios
 
 ### Flujo de Autenticación
 
 ```
-Usuario → Login → AuthenticationService.AuthenticateAsync()
+Usuario intenta acceder a página protegida
          ↓
-    Validación de credenciales
+    [RequireAuth] verifica sesión
          ↓
-    Creación de sesión
+    Si no autenticado → Redirige a /Auth/Login?returnUrl=<url-original>
          ↓
-    Redirección según rol:
-    - Administrador → Dashboard
-    - Usuario → Lista de Escenas
+    Usuario ingresa credenciales
+         ↓
+    AuthenticationService.AuthenticateAsync()
+         ↓
+    Validación de credenciales y estado activo
+         ↓
+    Creación de sesión con datos del usuario
+         ↓
+    Redirección a returnUrl o según rol:
+    - Administrador → Dashboard (si no hay returnUrl)
+    - Usuario → Lista de Escenas (si no hay returnUrl)
 ```
 
-**Nota de Seguridad**: El sistema actualmente almacena contraseñas en texto plano. Se recomienda implementar hashing (bcrypt, PBKDF2) en producción.
+### Contenido Dinámico
+
+La página principal (`Home/Index`) muestra contenido diferente según el estado de autenticación:
+
+- **No autenticado**: Botón "Iniciar Sesión" y tarjetas informativas sin funcionalidad
+- **Autenticado**: Botones funcionales para "Registrar Escena", "Comparar", etc.
+- **Administrador**: Además muestra botón "Ver Dashboard"
+
+**Nota de Seguridad**: El sistema actualmente almacena contraseñas en texto plano. Se recomienda encarecidamente implementar hashing (bcrypt, PBKDF2) antes de usar en producción.
 
 ---
 
@@ -474,13 +561,59 @@ El `ApplicationDbContext` configura índices para optimizar consultas:
 
 ---
 
+##  Interfaz de Usuario y Diseño
+
+### Esquema de Colores Unificado
+
+El sistema implementa un **esquema de colores consistente** en toda la aplicación mediante variables CSS:
+
+- **Color Primario**: `#1a3a52` (Azul oscuro) - Usado en headers, navbar, botones principales
+- **Color Secundario**: `#2c5aa0` (Azul) - Usado en hovers, bordes, enlaces
+- **Color Accent**: `#2c5aa0` - Énfasis y elementos destacados
+
+**Variables CSS Definidas** (`wwwroot/css/site.css`):
+```css
+--color-primary: #1a3a52
+--color-secondary: #2c5aa0
+--color-accent: #2c5aa0
+--color-text: #333
+--color-success: #28a745
+--color-danger: #dc3545
+--color-warning: #ffc107
+--color-info: #17a2b8
+```
+
+### Aplicación del Diseño
+
+- **Navbar**: Fondo color primario con borde secundario
+- **Botones**: Color primario con hover en secundario
+- **Formularios**: Focus en color secundario
+- **Tablas**: Headers en color primario
+- **Alertas**: Colores semánticos consistentes
+- **Tarjetas**: Headers en color primario con borde secundario
+
+### Experiencia de Usuario
+
+- **Navegación Intuitiva**: Menú contextual que muestra opciones según rol
+- **Feedback Visual**: Mensajes de éxito/error mediante `TempData`
+- **Validación en Tiempo Real**: JavaScript para prevenir errores antes del envío
+- **Responsive Design**: Adaptación a diferentes tamaños de pantalla con Bootstrap 5
+- **Transiciones Suaves**: Efectos hover y transiciones CSS para mejor interactividad
+
+---
+
 ##  Uso del Sistema
 
-### 1. Iniciar Sesión
+### 1. Iniciar Sesión (Obligatorio)
 
-1. Accede a `/Auth/Login`
-2. Ingresa tus credenciales
-3. El sistema te redirigirá según tu rol
+**Antes de acceder a cualquier funcionalidad, debes iniciar sesión.**
+
+1. Accede a `/Auth/Login` o haz clic en "Iniciar Sesión" desde la página principal
+2. Ingresa tu nombre de usuario y contraseña
+3. Si intentabas acceder a una página específica, serás redirigido automáticamente después del login
+4. Si inicias sesión directamente, serás redirigido según tu rol:
+   - **Administrador** → Dashboard
+   - **Usuario** → Lista de Escenas
 
 ### 2. Registrar una Escena de Crimen
 
@@ -499,13 +632,22 @@ El `ApplicationDbContext` configura índices para optimizar consultas:
 
 ### 3. Comparar Escenas
 
-1. Ve a **Escenas de Crimen** → **Comparar**
-2. Selecciona dos escenas de los dropdowns
+1. Ve a **Escenas de Crimen** → **Comparar** (requiere autenticación)
+2. Selecciona dos escenas diferentes de los dropdowns
+   - **Validación automática**: El sistema previene seleccionar la misma escena en ambos campos
+   - Las opciones ya seleccionadas se deshabilitan automáticamente en el otro dropdown
+   - Si intentas seleccionar la misma escena, aparecerá una alerta y se limpiará la selección
 3. Haz clic en **Comparar**
-4. Revisa el resultado:
-   - Porcentaje de similitud
-   - Lista de coincidencias
-   - Clasificación (Crimen en Serie, Conexión Probable, Similitud Baja)
+4. Revisa el resultado detallado:
+   - Porcentaje de similitud (0-100%)
+   - Información completa de ambas escenas (Tipo de Crimen, Modus Operandi mostrados correctamente)
+   - Lista de coincidencias detectadas
+   - Clasificación automática:
+     - **Crimen en Serie**: ≥75% similitud
+     - **Conexión Probable**: 60-74% similitud
+     - **Similitud Baja**: <60% similitud
+
+**Nota**: El sistema valida tanto en el cliente (JavaScript) como en el servidor que las dos escenas sean diferentes.
 
 ### 4. Buscar Escenas Similares
 
@@ -529,13 +671,84 @@ El `ApplicationDbContext` configura índices para optimizar consultas:
 
 ---
 
+##  Mejoras Técnicas Implementadas
+
+### Optimizaciones del Algoritmo Core
+
+1. **Constantes para Configuración**
+   - Pesos de criterios definidos como constantes (`PESO_TIPO_CRIMEN`, `PESO_MODUS_OPERANDI`, etc.)
+   - Umbrales de clasificación configurables (`UMBRAL_CRIMEN_EN_SERIE`, `UMBRAL_CONEXION_PROBABLE`)
+   - Facilita ajustes futuros sin modificar la lógica del algoritmo
+
+2. **Optimización de Comparación de Evidencias**
+   - Implementación con `HashSet<TipoEvidencia>` para operaciones O(1)
+   - Uso de `Intersect` y `UnionWith` para cálculos eficientes
+   - Reducción de complejidad de O(n²) a O(n)
+
+3. **Cálculo Mejorado de Características**
+   - Evalúa coincidencias en ambos estados booleanos (true/false)
+   - Proporciona mayor precisión en la detección de patrones
+
+4. **Validaciones Robustas**
+   - Validación de parámetros nulos en todos los métodos públicos
+   - Verificación de escenas idénticas con retorno apropiado
+   - Validación de rangos para umbrales
+
+### Mejoras de Seguridad
+
+1. **Autenticación Obligatoria**
+   - Todas las funcionalidades principales protegidas con `[RequireAuth]`
+   - Redirección automática con `returnUrl` para mejor UX
+   - Validación en cada acción sensible
+
+2. **Validación Multi-Capa**
+   - **Client-side**: JavaScript previene selección de misma escena en comparaciones
+   - **Server-side**: Validación en controlador asegura integridad de datos
+   - **Base de Datos**: Constraints y validaciones a nivel de esquema
+
+### Mejoras de Presentación
+
+1. **Display Correcto de Datos**
+   - TipoCrimen y ModusOperandi muestran su propiedad `Nombre` en lugar del objeto completo
+   - Uso de null-conditional operator (`?.`) y null-coalescing (`??`) para robustez
+   - Implementado en: ResultadoComparacion, Resultados, Dashboard
+
+2. **Interfaz Unificada**
+   - Esquema de colores centralizado mediante variables CSS
+   - Consistencia visual en toda la aplicación
+   - Mejor experiencia de usuario
+
+### Mejoras de Código
+
+1. **Documentación**
+   - Comentarios concisos y claros en todo el código
+   - Explicación de lógica compleja y decisiones de diseño
+   - Documentación orientada a estudiantes universitarios
+
+2. **Estructura y Organización**
+   - Separación de responsabilidades mejorada
+   - Métodos auxiliares privados para evitar duplicación
+   - Código más mantenible y legible
+
+---
+
 ##  Características Técnicas Destacadas
 
 ### Validaciones
 
-- **Front-end**: Validaciones con Data Annotations y jQuery Validation
-- **Back-end**: Validaciones robustas en controladores
-- **Base de Datos**: Constraints y validaciones a nivel de esquema
+- **Front-end**: 
+  - Validaciones con Data Annotations y jQuery Validation
+  - JavaScript personalizado para validación de comparaciones (prevenir misma escena)
+  - Deshabilitación dinámica de opciones en dropdowns
+- **Back-end**: 
+  - Validaciones robustas en controladores
+  - Verificación de existencia y estado activo de catálogos
+  - Validación de parámetros y rangos
+  - Validación de integridad de datos (escenas diferentes en comparaciones)
+- **Base de Datos**: 
+  - Constraints y validaciones a nivel de esquema
+  - Índices únicos para evitar duplicados (usuario, email)
+  - Relaciones con restricciones apropiadas (Restrict/Cascade)
 
 ### Manejo de Errores
 
@@ -545,15 +758,29 @@ El `ApplicationDbContext` configura índices para optimizar consultas:
 
 ### Optimizaciones
 
-- Uso de `Include()` para carga eager de relaciones
-- Índices en campos frecuentemente consultados
-- Consultas optimizadas con LINQ
+- **Carga Eager**: Uso de `Include()` para cargar relaciones en una sola consulta, evitando consultas N+1
+- **Índices Optimizados**: 
+  - Índices únicos en `Usuarios.NombreUsuario` y `Usuarios.Email`
+  - Índice compuesto en `EscenasCrimen` para búsquedas de comparación
+  - Índices en campos frecuentemente consultados (FechaCrimen, FechaRegistro)
+- **Algoritmos Optimizados**: 
+  - Uso de `HashSet` para comparación de evidencias (O(n) vs O(n²))
+  - Evasión de duplicados usando `HashSet` en detección de series
+- **Consultas LINQ Optimizadas**: 
+  - Proyecciones eficientes
+  - Ordenamiento y filtrado en base de datos
+  - Paginación implícita donde aplica
 
 ### Seguridad
 
-- Protección CSRF con `ValidateAntiForgeryToken`
-- Validación de autorización en cada acción sensible
-- Sanitización de inputs
+- **Protección CSRF**: `ValidateAntiForgeryToken` en todos los formularios POST
+- **Autorización Estricta**: 
+  - `[RequireAuth]` en todas las acciones de escenas
+  - `[RequireAdmin]` en funciones administrativas
+  - Verificación de sesión en cada request
+- **Sanitización de Inputs**: Validación y limpieza de datos de entrada
+- **Validación Multi-Capa**: Front-end, back-end y base de datos
+- **Redirección Segura**: Validación de `returnUrl` con `Url.IsLocalUrl()` para prevenir ataques de redirección abierta
 
 ---
 
@@ -606,5 +833,19 @@ Este proyecto demuestra:
 
 ---
 
-**Versión**: 1.0  
-**Última actualización**: 2024
+---
+
+**Versión**: 2.0  
+**Última actualización**: Diciembre 2024
+
+### Changelog v2.0
+
+- ✅ Implementación de autenticación obligatoria para todas las funcionalidades
+- ✅ Unificación del esquema de colores en toda la aplicación
+- ✅ Validación para prevenir comparación de escenas idénticas (client-side y server-side)
+- ✅ Optimización del algoritmo core con constantes y `HashSet` para evidencias
+- ✅ Corrección de visualización de TipoCrimen y ModusOperandi en todas las vistas
+- ✅ Mejora del cálculo de similitud de características
+- ✅ Documentación mejorada con comentarios concisos en todo el código
+- ✅ Mejoras de seguridad y validaciones multi-capa
+- ✅ Experiencia de usuario mejorada con contenido dinámico según autenticación
