@@ -258,7 +258,7 @@ button.accept-policy {
 }
 
 .checkBox {
-  display: block;
+  display: inline-block;
   cursor: pointer;
   width: 30px;
   height: 30px;
@@ -266,13 +266,15 @@ button.accept-policy {
   border-radius: 10px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0px 0px 0px 2px #fff;
+  box-shadow: 0px 0px 0px 2px var(--color-secondary);
+  vertical-align: middle;
+  margin-right: 10px;
 }
 
 .checkBox div {
   width: 60px;
   height: 60px;
-  background-color: #fff;
+  background-color: var(--color-secondary);
   top: -52px;
   left: -52px;
   position: absolute;
@@ -293,4 +295,23 @@ button.accept-policy {
 
 .transition {
   transition: 300ms ease;
+}
+
+/* Estilos adicionales para integración con formularios */
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.checkbox-wrapper .checkBox {
+  flex-shrink: 0;
+}
+
+.checkbox-label-text {
+  display: inline-block;
+  vertical-align: middle;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
 }

@@ -100,13 +100,19 @@
                             var displayName = evidenciasList.ContainsKey(evidenciaStr) ? evidenciasList[evidenciaStr] : evidenciaStr;
                             var evidenciaId = $"evidencia_{evidencia}";
                             <div class="evidencia-item mb-3 p-3 border rounded">
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input evidencia-checkbox" type="checkbox" 
-                                           name="evidencias" value="@evidencia" 
-                                           id="@evidenciaId" 
-                                           data-evidencia="@evidencia"
-                                           data-index="@evidenciaIndex" />
-                                    <label class="form-check-label fw-bold" for="@evidenciaId">
+                                <div class="checkbox-wrapper mb-2">
+                                    <!-- From Uiverse.io by Nawsome -->
+                                    <div class="content">
+                                        <label class="checkBox">
+                                            <input class="evidencia-checkbox" type="checkbox" 
+                                                   name="evidencias" value="@evidencia" 
+                                                   id="@evidenciaId" 
+                                                   data-evidencia="@evidencia"
+                                                   data-index="@evidenciaIndex" />
+                                            <div class="transition"></div>
+                                        </label>
+                                    </div>
+                                    <label class="checkbox-label-text fw-bold" for="@evidenciaId">
                                         @displayName
                                     </label>
                                 </div>
@@ -131,22 +137,54 @@
                 <label class="control-label col-md-3">Características Especiales</label>
                 <div class="col-md-9">
                     <div class="checkbox-grid">
-                        <label class="checkbox-label">
-                            <input asp-for="UsoViolencia" type="checkbox" />
-                            Uso de Violencia
-                        </label>
-                        <label class="checkbox-label">
-                            <input asp-for="ActoPlanificado" type="checkbox" />
-                            Acto Planificado
-                        </label>
-                        <label class="checkbox-label">
-                            <input asp-for="MultiplesPerpetadores" type="checkbox" />
-                            Múltiples Perpetradores
-                        </label>
-                        <label class="checkbox-label">
-                            <input asp-for="AutoriaDesconocida" type="checkbox" />
-                            Autoría Desconocida
-                        </label>
+                        <div class="checkbox-wrapper">
+                            <!-- From Uiverse.io by Nawsome -->
+                            <div class="content">
+                                <label class="checkBox">
+                                    <input asp-for="UsoViolencia" type="checkbox" />
+                                    <div class="transition"></div>
+                                </label>
+                            </div>
+                            <label class="checkbox-label-text" for="UsoViolencia">
+                                Uso de Violencia
+                            </label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <!-- From Uiverse.io by Nawsome -->
+                            <div class="content">
+                                <label class="checkBox">
+                                    <input asp-for="ActoPlanificado" type="checkbox" />
+                                    <div class="transition"></div>
+                                </label>
+                            </div>
+                            <label class="checkbox-label-text" for="ActoPlanificado">
+                                Acto Planificado
+                            </label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <!-- From Uiverse.io by Nawsome -->
+                            <div class="content">
+                                <label class="checkBox">
+                                    <input asp-for="MultiplesPerpetadores" type="checkbox" />
+                                    <div class="transition"></div>
+                                </label>
+                            </div>
+                            <label class="checkbox-label-text" for="MultiplesPerpetadores">
+                                Múltiples Perpetradores
+                            </label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <!-- From Uiverse.io by Nawsome -->
+                            <div class="content">
+                                <label class="checkBox">
+                                    <input asp-for="AutoriaDesconocida" type="checkbox" />
+                                    <div class="transition"></div>
+                                </label>
+                            </div>
+                            <label class="checkbox-label-text" for="AutoriaDesconocida">
+                                Autoría Desconocida
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -341,5 +379,16 @@
         font-size: 0.9em;
         margin-top: 5px;
         display: block;
+    }
+
+    .checkbox-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .checkbox-wrapper {
+        display: flex;
+        align-items: center;
     }
 </style>
