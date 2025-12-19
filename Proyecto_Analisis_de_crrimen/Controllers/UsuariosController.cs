@@ -9,30 +9,23 @@ namespace Proyecto_Analisis_de_crimen.Controllers
 {
     // Controlador para gestionar usuarios del sistema
     // Solo los administradores pueden acceder aquí
+    // Aplica DIP: Depende de interfaces, no de implementaciones concretas
     [RequireAdmin]
     public class UsuariosController : Controller
     {
-        // Constantes que usamos en las validaciones
-        private const int LONGITUD_MINIMA_PASSWORD = 6;
-        private const string PATRON_EMAIL = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+        private readonly IUsuarioService _usuarioService;
 
-        private readonly ApplicationDbContext _context;
-        private readonly AuthenticationService _authService;
-
-        // Constructor con inyección de dependencias
-        public UsuariosController(ApplicationDbContext context, AuthenticationService authService)
+        // Constructor con inyección de dependencias (DIP)
+        public UsuariosController(IUsuarioService usuarioService)
         {
-            _context = context;
-            _authService = authService;
+            _usuarioService = usuarioService;
         }
 
         // Muestra la lista de todos los usuarios, ordenados por nombre
         public async Task<IActionResult> Index()
         {
-            var usuarios = await _context.Usuarios
-                .Include(u => u.Rol)  // Traemos también el rol de cada usuario
-                .OrderBy(u => u.NombreUsuario)
-                .ToListAsync();
+            var usuarios = (await _usuarioService.ObtenerTodosAsync())
+                .OrderBy(u => u.NombreUsuario);
             
             return View(usuarios);
         }
@@ -50,19 +43,18 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Crear(Usuario usuario)
         {
-            // Validamos todo antes de guardar
-            await ValidarUsuario(usuario);
+            // Validamos todo antes de guardar usando el servicio
+            if (!await _usuarioService.ValidarUsuarioAsync(usuario))
+            {
+                // Agregar errores específicos si es necesario
+                ModelState.AddModelError("", "Los datos del usuario no son válidos");
+            }
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Creamos una nueva instancia limpia para evitar problemas con las propiedades de navegación
-                    var nuevoUsuario = CrearNuevoUsuario(usuario);
-
-                    _context.Usuarios.Add(nuevoUsuario);
-                    await _context.SaveChangesAsync();
-
+                    var nuevoUsuario = await _usuarioService.CrearUsuarioAsync(usuario);
                     TempData["Success"] = $"Usuario '{nuevoUsuario.NombreUsuario}' creado exitosamente";
                     return RedirectToAction(nameof(Index));
                 }
@@ -83,9 +75,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         // Muestra el formulario de edición con los datos del usuario
         public async Task<IActionResult> Editar(int id)
         {
-            var usuario = await _context.Usuarios
-                .Include(u => u.Rol)
-                .FirstOrDefaultAsync(u => u.Id == id);
+            var usuario = await _usuarioService.ObtenerPorIdAsync(id);
 
             if (usuario == null)
             {
@@ -111,31 +101,20 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 return NotFound();
             }
 
-            // Validamos, pero excluimos el usuario actual de las validaciones de unicidad
-            await ValidarUsuario(usuario, id);
+            // Validar usando el servicio
+            if (!await _usuarioService.ValidarUsuarioAsync(usuario, id))
+            {
+                ModelState.AddModelError("", "Los datos del usuario no son válidos");
+            }
 
             // Validar y procesar contraseña
             string? nuevaPassword = ObtenerPasswordParaActualizar(usuario);
-            if (!string.IsNullOrWhiteSpace(nuevaPassword) && nuevaPassword.Length < LONGITUD_MINIMA_PASSWORD)
-            {
-                ModelState.AddModelError("NuevaPassword", $"La contraseña debe tener al menos {LONGITUD_MINIMA_PASSWORD} caracteres");
-            }
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    var usuarioExistente = await _context.Usuarios.FindAsync(id);
-                    if (usuarioExistente == null)
-                    {
-                        return NotFound();
-                    }
-
-                    // Actualizar propiedades del usuario
-                    ActualizarPropiedadesUsuario(usuarioExistente, usuario, nuevaPassword);
-
-                    await _context.SaveChangesAsync();
-
+                    await _usuarioService.ActualizarUsuarioAsync(id, usuario, nuevaPassword);
                     TempData["Success"] = $"Usuario '{usuario.NombreUsuario}' actualizado exitosamente";
                     return RedirectToAction(nameof(Index));
                 }
@@ -160,7 +139,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Desactivar(int id)
         {
-            var usuario = await _context.Usuarios.FindAsync(id);
+            var usuario = await _usuarioService.ObtenerPorIdAsync(id);
             if (usuario == null)
             {
                 return NotFound();
@@ -174,12 +153,12 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Cambiamos el estado (si estaba activo, lo desactivamos y viceversa)
-            usuario.Activo = !usuario.Activo;
-            await _context.SaveChangesAsync();
-
-            string estado = usuario.Activo ? "activado" : "desactivado";
-            TempData["Success"] = $"Usuario '{usuario.NombreUsuario}' {estado} exitosamente";
+            var exito = await _usuarioService.CambiarEstadoUsuarioAsync(id);
+            if (exito)
+            {
+                string estado = usuario.Activo ? "desactivado" : "activado";
+                TempData["Success"] = $"Usuario '{usuario.NombreUsuario}' {estado} exitosamente";
+            }
             
             return RedirectToAction(nameof(Index));
         }
@@ -192,89 +171,13 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         // Si se pasa un rolSeleccionado, ese será el que aparezca seleccionado (útil al editar)
         private async Task CargarRolesEnViewBag(int? rolSeleccionado = null)
         {
+            var roles = await _usuarioService.ObtenerRolesAsync();
             ViewBag.Roles = new SelectList(
-                await _context.Roles.OrderBy(r => r.Nombre).ToListAsync(),
+                roles.OrderBy(r => r.Nombre),
                 "Id",
                 "Nombre",
                 rolSeleccionado
             );
-        }
-
-        // Valida todos los datos del usuario antes de guardarlo
-        // Verifica que el nombre de usuario y email sean únicos, que la contraseña tenga al menos 6 caracteres, y que el rol exista
-        // Si se pasa excludeId, excluimos ese usuario de las validaciones de unicidad (útil al editar)
-        private async Task ValidarUsuario(Usuario usuario, int? excludeId = null)
-        {
-            // Verificamos que el nombre de usuario no esté en uso
-            if (await _authService.UsuarioExisteAsync(usuario.NombreUsuario, excludeId))
-            {
-                ModelState.AddModelError("NombreUsuario", "Este nombre de usuario ya está en uso");
-            }
-
-            // Validamos el email
-            ValidarEmail(usuario.Email, excludeId);
-
-            // La contraseña solo se valida al crear, no al editar (a menos que se esté cambiando)
-            if (!excludeId.HasValue)
-            {
-                if (string.IsNullOrWhiteSpace(usuario.Password) || usuario.Password.Length < LONGITUD_MINIMA_PASSWORD)
-                {
-                    ModelState.AddModelError("Password", $"La contraseña debe tener al menos {LONGITUD_MINIMA_PASSWORD} caracteres");
-                }
-            }
-
-            // Verificamos que el rol que seleccionó realmente exista
-            if (usuario.RolId > 0)
-            {
-                var rolExiste = await _context.Roles.AnyAsync(r => r.Id == usuario.RolId);
-                if (!rolExiste)
-                {
-                    ModelState.AddModelError("RolId", "El rol seleccionado no existe");
-                }
-            }
-        }
-
-        // Valida que el email tenga un formato válido y que no esté en uso
-        private async Task ValidarEmail(string email, int? excludeId = null)
-        {
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                ModelState.AddModelError("Email", "El correo electrónico es obligatorio");
-                return;
-            }
-
-            // Verificamos el formato con una expresión regular
-            var emailRegex = new System.Text.RegularExpressions.Regex(
-                PATRON_EMAIL,
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-            if (!emailRegex.IsMatch(email.Trim()))
-            {
-                ModelState.AddModelError("Email", "El formato del correo electrónico no es válido");
-                return;
-            }
-
-            // Verificamos que no esté en uso por otro usuario
-            if (await _authService.EmailExisteAsync(email, excludeId))
-            {
-                ModelState.AddModelError("Email", "Este email ya está en uso");
-            }
-        }
-
-        // Crea un nuevo objeto Usuario limpio con los datos del formulario
-        // Lo hacemos así para evitar problemas con las propiedades de navegación que vienen del binding
-        private Usuario CrearNuevoUsuario(Usuario usuario)
-        {
-            return new Usuario
-            {
-                NombreUsuario = usuario.NombreUsuario?.Trim() ?? "",
-                Email = usuario.Email?.Trim() ?? "",
-                Password = usuario.Password,  // Nota: las contraseñas se guardan en texto plano según el diseño de la BD
-                NombreCompleto = usuario.NombreCompleto?.Trim() ?? "",
-                RolId = usuario.RolId,
-                Activo = usuario.Activo,
-                FechaCreacion = DateTime.Now
-            };
         }
 
         // Determina qué contraseña usar al actualizar
@@ -297,22 +200,6 @@ namespace Proyecto_Analisis_de_crimen.Controllers
             }
 
             return nuevaPassword;
-        }
-
-        // Actualiza las propiedades del usuario existente con los nuevos valores del formulario
-        private void ActualizarPropiedadesUsuario(Usuario usuarioExistente, Usuario usuarioNuevo, string? nuevaPassword)
-        {
-            usuarioExistente.NombreUsuario = usuarioNuevo.NombreUsuario?.Trim() ?? "";
-            usuarioExistente.Email = usuarioNuevo.Email?.Trim() ?? "";
-            usuarioExistente.NombreCompleto = usuarioNuevo.NombreCompleto?.Trim() ?? "";
-            usuarioExistente.RolId = usuarioNuevo.RolId;
-            usuarioExistente.Activo = usuarioNuevo.Activo;
-
-            // Solo actualizamos la contraseña si se proporcionó una nueva
-            if (!string.IsNullOrWhiteSpace(nuevaPassword))
-            {
-                usuarioExistente.Password = nuevaPassword;
-            }
         }
 
         // Maneja los errores de base de datos de forma consistente

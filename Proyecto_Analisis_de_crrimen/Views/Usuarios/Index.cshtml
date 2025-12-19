@@ -32,8 +32,8 @@
 
     <div class="row mb-3">
         <div class="col-md-12">
-            <a asp-action="Crear" class="btn btn-primary">
-                ➕ Crear Nuevo Usuario
+            <a asp-action="Crear" class="btn-uiverse">
+                CREAR NUEVO USUARIO
             </a>
         </div>
     </div>
@@ -96,21 +96,19 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group" role="group">
-                                            <a asp-action="Editar" asp-route-id="@item.Id" class="btn btn-sm btn-warning" title="Editar">
-                                                ✏️ Editar
-                                            </a>
+                                            <a asp-action="Editar" asp-route-id="@item.Id" class="btn-uiverse" style="background-color: #ffc107 !important; color: #000 !important; font-size: 14px; padding: 0.5rem 1rem; margin-right: 5px; text-decoration: none;">EDITAR</a>
                                             <form asp-action="Desactivar" asp-route-id="@item.Id" method="post" style="display:inline;" onsubmit="return confirm('¿Estás seguro de que deseas @(item.Activo ? "desactivar" : "activar") este usuario?');">
                                                 @Html.AntiForgeryToken()
                                                 @if (item.Activo)
                                                 {
-                                                    <button type="submit" class="btn btn-sm btn-danger" title="Desactivar">
-                                                        🚫 Desactivar
+                                                    <button type="submit" class="btn-uiverse" style="background-color: #dc3545 !important; font-size: 14px; padding: 0.5rem 1rem;">
+                                                        DESACTIVAR
                                                     </button>
                                                 }
                                                 else
                                                 {
-                                                    <button type="submit" class="btn btn-sm btn-success" title="Activar">
-                                                        ✅ Activar
+                                                    <button type="submit" class="btn-uiverse" style="background-color: #28a745 !important; font-size: 14px; padding: 0.5rem 1rem;">
+                                                        ACTIVAR
                                                     </button>
                                                 }
                                             </form>
@@ -135,9 +133,7 @@
 
     <div class="row mt-3">
         <div class="col-md-12">
-            <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">
-                ← Volver al Inicio
-            </a>
+            <a asp-controller="Home" asp-action="Index" class="btn-uiverse" style="background-color: #6c757d !important; text-decoration: none;">VOLVER AL INICIO</a>
         </div>
     </div>
 </div>

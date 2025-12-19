@@ -113,8 +113,8 @@
         </div>
 
         <div class="actions-panel">
-            @Html.ActionLink("NUEVA COMPARACIÓN", "Comparar", null, new { @class = "btn btn-primary" })
-            @Html.ActionLink("VER TODAS LAS ESCENAS", "Index", null, new { @class = "btn btn-secondary" })
+            <a href="@Url.Action("Comparar")" class="btn-uiverse">NUEVA COMPARACIÓN</a>
+            <a href="@Url.Action("Index")" class="btn-uiverse" style="background-color: #6c757d !important; text-decoration: none;">VER TODAS LAS ESCENAS</a>
         </div>
     </div>
 </div>

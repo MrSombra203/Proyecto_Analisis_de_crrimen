@@ -315,3 +315,117 @@ button.accept-policy {
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* ============================================
+   BOTÓN ESTILO UIVERSE (Adaptado a colores del sistema)
+   ============================================ */
+/* From Uiverse.io by cssbuttons-io - Adaptado para el sistema */
+button.btn-uiverse,
+.btn-uiverse {
+  font-size: 18px;
+  background-color: var(--color-primary);
+  color: #fff;
+  text-shadow: 0 2px 0 rgb(0 0 0 / 25%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: 0;
+  z-index: 1;
+  user-select: none;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: unset;
+  padding: 0.8rem 1.5rem;
+  text-decoration: none;
+  font-weight: 900;
+  transition: all 0.7s cubic-bezier(0, 0.8, 0.26, 0.99);
+}
+
+button.btn-uiverse:before,
+.btn-uiverse:before {
+  position: absolute;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  content: "";
+  transition: 0.7s cubic-bezier(0, 0.8, 0.26, 0.99);
+  z-index: -1;
+  background-color: var(--color-primary) !important;
+  box-shadow: 0 -4px rgb(15 37 53 / 50%) inset,
+    0 4px rgb(74 123 200 / 99%) inset, -4px 0 rgb(74 123 200 / 50%) inset,
+    4px 0 rgb(15 37 53 / 50%) inset;
+}
+
+button.btn-uiverse:after,
+.btn-uiverse:after {
+  position: absolute;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  content: "";
+  box-shadow: 0 4px 0 0 rgb(0 0 0 / 15%);
+  transition: 0.7s cubic-bezier(0, 0.8, 0.26, 0.99);
+}
+
+button.btn-uiverse:hover:before,
+.btn-uiverse:hover:before {
+  box-shadow: 0 -4px rgb(0 0 0 / 50%) inset, 0 4px rgb(255 255 255 / 20%) inset,
+    -4px 0 rgb(255 255 255 / 20%) inset, 4px 0 rgb(0 0 0 / 50%) inset;
+}
+
+button.btn-uiverse:hover:after,
+.btn-uiverse:hover:after {
+  box-shadow: 0 4px 0 0 rgb(0 0 0 / 15%);
+}
+
+button.btn-uiverse:active,
+.btn-uiverse:active {
+  transform: translateY(4px);
+}
+
+button.btn-uiverse:active:after,
+.btn-uiverse:active:after {
+  box-shadow: 0 0px 0 0 rgb(0 0 0 / 15%);
+}
+
+/* Variantes de color para btn-uiverse */
+.btn-uiverse[style*="background-color: #6c757d"]:before {
+  background-color: #6c757d !important;
+  box-shadow: 0 -4px rgb(52 58 64 / 50%) inset,
+    0 4px rgb(173 181 189 / 99%) inset, -4px 0 rgb(173 181 189 / 50%) inset,
+    4px 0 rgb(52 58 64 / 50%) inset;
+}
+
+.btn-uiverse[style*="background-color: #ffc107"]:before {
+  background-color: #ffc107 !important;
+  box-shadow: 0 -4px rgb(184 134 11 / 50%) inset,
+    0 4px rgb(255 255 255 / 99%) inset, -4px 0 rgb(255 255 255 / 50%) inset,
+    4px 0 rgb(184 134 11 / 50%) inset;
+}
+
+.btn-uiverse[style*="background-color: #dc3545"]:before {
+  background-color: #dc3545 !important;
+  box-shadow: 0 -4px rgb(108 13 13 / 50%) inset,
+    0 4px rgb(255 193 193 / 99%) inset, -4px 0 rgb(255 193 193 / 50%) inset,
+    4px 0 rgb(108 13 13 / 50%) inset;
+}
+
+.btn-uiverse[style*="background-color: #28a745"]:before {
+  background-color: #28a745 !important;
+  box-shadow: 0 -4px rgb(13 108 13 / 50%) inset,
+    0 4px rgb(193 255 193 / 99%) inset, -4px 0 rgb(193 255 193 / 50%) inset,
+    4px 0 rgb(13 108 13 / 50%) inset;
+}
+
+.btn-uiverse[style*="background-color: transparent"]:before {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}

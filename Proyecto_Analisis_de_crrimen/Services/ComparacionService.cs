@@ -8,8 +8,9 @@ namespace Proyecto_Analisis_de_crimen.Services
     /// <summary>
     /// Servicio CORE del sistema. Implementa el algoritmo de comparación multi-criterio
     /// para calcular similitud entre escenas de crímenes y detectar series criminales.
+    /// Aplica SRP: Responsabilidad única de comparación de escenas
     /// </summary>
-    public class ComparacionService
+    public class ComparacionService : IComparacionService
     {
         // PESOS DE CRITERIOS (suman 100 puntos)
         private const double PESO_TIPO_CRIMEN = 25.0;        // Tipo de delito (muy importante)

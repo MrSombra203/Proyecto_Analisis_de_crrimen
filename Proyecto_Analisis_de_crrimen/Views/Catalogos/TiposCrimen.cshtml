@@ -17,8 +17,8 @@
 }
 
 <p>
-    <a asp-action="CrearTipoCrimen" class="btn btn-primary">Nuevo Tipo de Crimen</a>
-    <a asp-controller="Catalogos" asp-action="ModusOperandi" class="btn btn-secondary">Gestionar Modus Operandi</a>
+    <a asp-action="CrearTipoCrimen" class="btn-uiverse">NUEVO TIPO DE CRIMEN</a>
+    <a asp-controller="Catalogos" asp-action="ModusOperandi" class="btn-uiverse" style="background-color: #6c757d !important; text-decoration: none;">GESTIONAR MODUS OPERANDI</a>
 </p>
 
 <div class="table-responsive">
@@ -54,11 +54,11 @@
                         </td>
                         <td>@item.FechaCreacion.ToString("dd/MM/yyyy")</td>
                         <td>
-                            <a asp-action="EditarTipoCrimen" asp-route-id="@item.Id" class="btn btn-sm btn-warning">Editar</a>
+                            <a asp-action="EditarTipoCrimen" asp-route-id="@item.Id" class="btn-uiverse" style="background-color: #ffc107 !important; color: #000 !important; font-size: 14px; padding: 0.5rem 1rem; margin-right: 5px;">EDITAR</a>
                             <form asp-action="DesactivarTipoCrimen" asp-route-id="@item.Id" method="post" style="display:inline;">
                                 @Html.AntiForgeryToken()
-                                <button type="submit" class="btn btn-sm @(item.Activo ? "btn-danger" : "btn-success")">
-                                    @(item.Activo ? "Desactivar" : "Activar")
+                                <button type="submit" class="btn-uiverse" style="background-color: @(item.Activo ? "#dc3545" : "#28a745") !important; font-size: 14px; padding: 0.5rem 1rem;">
+                                    @(item.Activo ? "DESACTIVAR" : "ACTIVAR")
                                 </button>
                             </form>
                         </td>

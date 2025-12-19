@@ -1,19 +1,23 @@
 using Microsoft.EntityFrameworkCore;
 using Proyecto_Analisis_de_crimen.Models;
+using Proyecto_Analisis_de_crimen.Repositories;
 
 namespace Proyecto_Analisis_de_crimen.Services
 {
     /// <summary>
     /// Servicio de autenticación: valida credenciales, verifica usuarios/emails y actualiza acceso.
     /// NOTA: Almacena contraseñas en texto plano. En producción usar hashing (bcrypt, PBKDF2).
+    /// Aplica SRP: Responsabilidad única de autenticación
     /// </summary>
-    public class AuthenticationService
+    public class AuthenticationService : IAuthenticationService
     {
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ApplicationDbContext _context;
 
-        public AuthenticationService(ApplicationDbContext context)
+        public AuthenticationService(IUnitOfWork unitOfWork, ApplicationDbContext context)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
+            _context = context; // Necesario para Include con Rol
         }
 
         /// <summary>
@@ -39,7 +43,7 @@ namespace Proyecto_Analisis_de_crimen.Services
 
             // Actualizar último acceso
             usuario.UltimoAcceso = DateTime.Now;
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return usuario;
         }
@@ -59,12 +63,11 @@ namespace Proyecto_Analisis_de_crimen.Services
         /// </summary>
         public async Task<bool> UsuarioExisteAsync(string nombreUsuario, int? excludeId = null)
         {
-            var query = _context.Usuarios.Where(u => u.NombreUsuario == nombreUsuario);
-            
             if (excludeId.HasValue)
-                query = query.Where(u => u.Id != excludeId.Value);
-
-            return await query.AnyAsync();
+            {
+                return await _unitOfWork.Usuarios.AnyAsync(u => u.NombreUsuario == nombreUsuario && u.Id != excludeId.Value);
+            }
+            return await _unitOfWork.Usuarios.AnyAsync(u => u.NombreUsuario == nombreUsuario);
         }
 
         /// <summary>
@@ -72,12 +75,11 @@ namespace Proyecto_Analisis_de_crimen.Services
         /// </summary>
         public async Task<bool> EmailExisteAsync(string email, int? excludeId = null)
         {
-            var query = _context.Usuarios.Where(u => u.Email == email);
-            
             if (excludeId.HasValue)
-                query = query.Where(u => u.Id != excludeId.Value);
-
-            return await query.AnyAsync();
+            {
+                return await _unitOfWork.Usuarios.AnyAsync(u => u.Email == email && u.Id != excludeId.Value);
+            }
+            return await _unitOfWork.Usuarios.AnyAsync(u => u.Email == email);
         }
     }
 }

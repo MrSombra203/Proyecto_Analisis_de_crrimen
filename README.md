@@ -104,22 +104,71 @@ public List<List<EscenaCrimen>> DetectarCrimenesEnSerie(List<EscenaCrimen> todas
 ```
 Identifica grupos de crímenes que forman series, utilizando un umbral de 75% y mínimo de 3 escenas para considerar crímenes en serie. Evita duplicados usando `HashSet`.
 
+### Servicios del Sistema
+
+El proyecto implementa una arquitectura en capas con servicios especializados que aplican el principio de responsabilidad única (SRP):
+
+#### 1. ComparacionService
+- **Responsabilidad**: Algoritmo core de comparación de escenas de crímenes
+- **Interfaz**: `IComparacionService`
+- **Métodos principales**: `CompararEscenas`, `BuscarEscenasSimilares`, `DetectarCrimenesEnSerie`
+- **Dependencias**: Ninguna (servicio puro de lógica)
+
+#### 2. EscenaCrimenService
+- **Responsabilidad**: Gestión de escenas de crímenes (CRUD y validaciones)
+- **Interfaz**: `IEscenaCrimenService`
+- **Métodos principales**: `ObtenerTodasAsync`, `ObtenerPorIdAsync`, `RegistrarEscenaAsync`, `ValidarEscenaAsync`
+- **Dependencias**: `IUnitOfWork`
+
+#### 3. CatalogoService
+- **Responsabilidad**: Gestión de catálogos (TiposCrimen y ModusOperandi)
+- **Interfaz**: `ICatalogoService`
+- **Métodos principales**: CRUD para ambos catálogos, validación de existencia, cambio de estado
+- **Dependencias**: `IUnitOfWork`
+
+#### 4. UsuarioService
+- **Responsabilidad**: Gestión de usuarios y roles
+- **Interfaz**: `IUsuarioService`
+- **Métodos principales**: CRUD de usuarios, validación de usuarios, gestión de roles
+- **Dependencias**: `IUnitOfWork`, `IAuthenticationService`, `ApplicationDbContext` (para Include con Rol)
+
+#### 5. AuthenticationService
+- **Responsabilidad**: Autenticación y validación de credenciales
+- **Interfaz**: `IAuthenticationService`
+- **Métodos principales**: `AuthenticateAsync`, `UsuarioExisteAsync`, `EmailExisteAsync`
+- **Dependencias**: `IUnitOfWork`, `ApplicationDbContext` (para Include con Rol)
+
+**Nota**: Todos los servicios están registrados en `Program.cs` con inyección de dependencias (AddScoped) y siguen el principio de inversión de dependencias (DIP) utilizando interfaces.
+
 ---
 
 ##  Arquitectura
 
-El proyecto sigue el patrón **MVC (Model-View-Controller)** con una arquitectura en capas:
+El proyecto sigue el patrón **MVC (Model-View-Controller)** con una arquitectura en capas mejorada que implementa **Repository Pattern** y **Unit of Work Pattern** para una mejor separación de responsabilidades y mantenibilidad:
 
 ```
 ┌─────────────────────────────────────┐
 │         Controllers Layer            │
 │  (EscenaCrimen, Auth, Catalogos)    │
+│  DIP: Depende de interfaces         │
 └──────────────┬──────────────────────┘
                │
 ┌──────────────▼──────────────────────┐
 │         Services Layer               │
 │  (ComparacionService - CORE)        │
+│  (EscenaCrimenService)               │
 │  (AuthenticationService)             │
+│  (CatalogoService, UsuarioService)   │
+│  SRP: Lógica de negocio separada    │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│      Repository Layer                │
+│  (Repository Pattern)                │
+│  IRepository<T>, Repository<T>       │
+│  IEscenaCrimenRepository             │
+│  IUnitOfWork, UnitOfWork             │
+│  ISP, OCP: Extensible y flexible    │
 └──────────────┬──────────────────────┘
                │
 ┌──────────────▼──────────────────────┐
@@ -133,11 +182,66 @@ El proyecto sigue el patrón **MVC (Model-View-Controller)** con una arquitectur
 └──────────────────────────────────────┘
 ```
 
+### Patrones Arquitectónicos Implementados
+
+#### Repository Pattern
+
+El proyecto implementa el **Repository Pattern** para abstraer el acceso a datos y aplicar principios SOLID:
+
+- **`IRepository<T>`**: Interfaz genérica que define operaciones CRUD básicas para cualquier entidad
+  - Métodos de consulta: `GetByIdAsync`, `GetAllAsync`, `FindAsync`, `FirstOrDefaultAsync`, `AnyAsync`, `CountAsync`
+  - Métodos de modificación: `AddAsync`, `AddRangeAsync`, `Update`, `Remove`, `RemoveRange`
+  - Aplica **ISP (Interface Segregation Principle)** y **DIP (Dependency Inversion Principle)**
+
+- **`Repository<T>`**: Implementación genérica base que encapsula la lógica común de acceso a datos
+  - Usa `DbContext.Set<T>()` para operaciones genéricas
+  - Aplica **SRP (Single Responsibility Principle)**: Responsabilidad única de acceso a datos
+
+- **`IEscenaCrimenRepository`**: Interfaz específica que extiende `IRepository<EscenaCrimen>` con operaciones especializadas
+  - Métodos optimizados: `GetByIdWithRelationsAsync`, `GetAllWithRelationsAsync`, `GetByTipoCrimenAsync`, `GetByAreaGeograficaAsync`, `GetByModusOperandiAsync`, `GetUltimasEscenasAsync`
+  - Aplica **OCP (Open/Closed Principle)**: Extensible sin modificar código base
+
+- **`EscenaCrimenRepository`**: Implementación específica con operaciones optimizadas usando `Include()` para eager loading
+  - Evita consultas N+1 cargando relaciones en una sola consulta
+  - Ordena resultados por fecha de registro (más recientes primero)
+
+#### Unit of Work Pattern
+
+El proyecto implementa **Unit of Work Pattern** para coordinar múltiples repositorios y manejar transacciones:
+
+- **`IUnitOfWork`**: Interfaz que expone todos los repositorios y métodos de transacción
+  - Propiedades: `EscenasCrimen`, `Evidencias`, `TiposCrimen`, `ModusOperandi`, `Usuarios`, `Roles`
+  - Métodos: `SaveChangesAsync`, `BeginTransactionAsync`, `CommitTransactionAsync`, `RollbackTransactionAsync`
+  - Aplica **DIP (Dependency Inversion Principle)**
+
+- **`UnitOfWork`**: Implementación que coordina todos los repositorios usando lazy initialization
+  - Cada repositorio se instancia solo cuando se accede por primera vez (patrón Lazy)
+  - Maneja transacciones de base de datos para operaciones atómicas
+  - Implementa `IDisposable` para liberar recursos adecuadamente
+
+**Beneficios de estos patrones:**
+- **Desacoplamiento**: Los servicios no dependen directamente de Entity Framework
+- **Testabilidad**: Fácil crear mocks de repositorios para pruebas unitarias
+- **Mantenibilidad**: Cambios en acceso a datos se aíslan en la capa de repositorios
+- **Transaccionalidad**: Unit of Work permite operaciones atómicas entre múltiples repositorios
+- **Reutilización**: Código genérico reduce duplicación
+
 ### Componentes Principales
 
-- **Controllers**: Manejan las peticiones HTTP y coordinan entre vistas y servicios
-- **Services**: Contienen la lógica de negocio, especialmente `ComparacionService`
-- **Models**: Entidades del dominio y contexto de base de datos
+- **Controllers**: Manejan las peticiones HTTP y coordinan entre vistas y servicios. Aplican **DIP** dependiendo de interfaces de servicios y `IUnitOfWork`.
+- **Services**: Contienen la lógica de negocio:
+  - `ComparacionService`: Algoritmo core de comparación de escenas
+  - `EscenaCrimenService`: Gestión de escenas de crímenes
+  - `CatalogoService`: Gestión de catálogos (TiposCrimen, ModusOperandi)
+  - `UsuarioService`: Gestión de usuarios y roles
+  - `AuthenticationService`: Autenticación y validación de credenciales
+  - Todos usan `IUnitOfWork` para acceso a datos y aplican **SRP**.
+- **Repositories**: Abstraen el acceso a datos usando Repository Pattern y Unit of Work Pattern:
+  - `IRepository<T>` / `Repository<T>`: Repositorio genérico para cualquier entidad
+  - `IEscenaCrimenRepository` / `EscenaCrimenRepository`: Repositorio específico con operaciones optimizadas
+  - `IUnitOfWork` / `UnitOfWork`: Coordina múltiples repositorios y transacciones
+  - Todos aplican principios **SOLID** (SRP, DIP, ISP, OCP).
+- **Models**: Entidades del dominio (EscenaCrimen, Evidencia, TipoCrimen, etc.) y contexto de base de datos (ApplicationDbContext)
 - **Attributes**: Filtros personalizados para autorización (`RequireAdmin`, `RequireAuth`)
 - **Views**: Interfaces de usuario en Razor Pages
 
@@ -247,12 +351,24 @@ Proyecto_Analisis_de_crrimen/
 │   ├── ComparacionResultado.cs      # Resultados de comparación
 │   └── ApplicationDbContext.cs      # Contexto de EF Core
 │
-├── Services/                 # Servicios de negocio
+├── Services/                 # Servicios de negocio (capa de lógica)
 │   ├── ComparacionService.cs        # CORE: Algoritmo de comparación
-│   └── AuthenticationService.cs     # Servicio de autenticación
+│   ├── EscenaCrimenService.cs       # Gestión de escenas de crimen
+│   ├── CatalogoService.cs           # Gestión de catálogos (TiposCrimen, ModusOperandi)
+│   ├── UsuarioService.cs            # Gestión de usuarios
+│   ├── AuthenticationService.cs     # Servicio de autenticación
+│   └── Interfaces/                  # Interfaces de servicios (IComparacionService, etc.)
+│
+├── Repositories/             # Repositorios (capa de acceso a datos)
+│   ├── IRepository.cs               # Interfaz genérica del repositorio
+│   ├── Repository.cs                # Implementación genérica del repositorio
+│   ├── IEscenaCrimenRepository.cs   # Interfaz específica para EscenaCrimen
+│   ├── EscenaCrimenRepository.cs    # Repositorio específico con operaciones optimizadas
+│   ├── IUnitOfWork.cs               # Interfaz Unit of Work Pattern
+│   └── UnitOfWork.cs                # Implementación Unit of Work Pattern
 │
 ├── Attributes/               # Atributos personalizados
-│   └── AuthorizeAttribute.cs        # Filtros de autorización
+│   └── AuthorizeAttribute.cs        # Filtros de autorización ([RequireAuth], [RequireAdmin])
 │
 ├── Views/                    # Vistas Razor
 │   ├── EscenaCrimen/                # Vistas de escenas
@@ -730,6 +846,22 @@ El sistema implementa un **esquema de colores consistente** en toda la aplicaci�
    - Métodos auxiliares privados para evitar duplicación
    - Código más mantenible y legible
 
+3. **Arquitectura con Repository Pattern y Unit of Work**
+   - **Repository Pattern**: Abstracción completa del acceso a datos mediante `IRepository<T>` y repositorios específicos
+   - **Unit of Work Pattern**: Coordinación de múltiples repositorios mediante `IUnitOfWork` para operaciones transaccionales
+   - **Lazy Initialization**: Los repositorios en `UnitOfWork` se instancian solo cuando se acceden por primera vez
+   - **Eager Loading Optimizado**: `EscenaCrimenRepository` utiliza `Include()` para cargar relaciones en una sola consulta
+   - **Desacoplamiento**: Los servicios no dependen directamente de Entity Framework, solo de interfaces
+   - **Testabilidad**: Arquitectura permite fácil creación de mocks para pruebas unitarias
+   - **Mantenibilidad**: Cambios en acceso a datos se aíslan en la capa de repositorios
+
+4. **Configuración de Inyección de Dependencias**
+   - Todos los servicios registrados en `Program.cs` con `AddScoped` (una instancia por request HTTP)
+   - `IUnitOfWork` registrado como servicio scoped para coordinar repositorios dentro del mismo request
+   - Interfaces e implementaciones registradas siguiendo DIP (Dependency Inversion Principle)
+   - Entity Framework configurado con retry on failure para mayor resiliencia
+   - Sesiones HTTP configuradas con seguridad (HttpOnly, SecurePolicy)
+
 ---
 
 ##  Características Técnicas Destacadas
@@ -823,12 +955,15 @@ Sistema desarrollado para análisis y gestión de escenas de crímenes.
 
 Este proyecto demuestra:
 
-- **Arquitectura MVC** en ASP.NET Core
-- **Entity Framework Core** para acceso a datos
-- **Algoritmos de comparación** y análisis de patrones
-- **Sistemas de autenticación** personalizados
-- **Gestión de catálogos** y datos maestros
-- **Optimización de consultas** con índices
+- **Arquitectura MVC** en ASP.NET Core con separación en capas
+- **Repository Pattern y Unit of Work Pattern** para abstracción de acceso a datos
+- **Principios SOLID** aplicados en toda la arquitectura (SRP, DIP, ISP, OCP)
+- **Inyección de Dependencias** con ASP.NET Core DI Container
+- **Entity Framework Core** para acceso a datos con eager loading optimizado
+- **Algoritmos de comparación** y análisis de patrones (coeficiente de Jaccard)
+- **Sistemas de autenticación** personalizados basados en sesión
+- **Gestión de catálogos** y datos maestros con activación/desactivación
+- **Optimización de consultas** con índices compuestos y consultas eficientes
 - **Validaciones** multi-capa (front-end, back-end, BD)
 
 ---
@@ -840,6 +975,12 @@ Este proyecto demuestra:
 
 ### Changelog v2.0
 
+- ✅ Implementación completa de Repository Pattern y Unit of Work Pattern
+- ✅ Arquitectura en capas con separación clara de responsabilidades (Controllers → Services → Repositories → Models)
+- ✅ Servicios especializados: ComparacionService, EscenaCrimenService, CatalogoService, UsuarioService, AuthenticationService
+- ✅ Repositorios genéricos (`IRepository<T>`) y específicos (`IEscenaCrimenRepository`) con operaciones optimizadas
+- ✅ Inyección de dependencias completa siguiendo principios SOLID (DIP, SRP, ISP, OCP)
+- ✅ Eager loading optimizado con `Include()` para evitar consultas N+1
 - ✅ Implementación de autenticación obligatoria para todas las funcionalidades
 - ✅ Unificación del esquema de colores en toda la aplicación
 - ✅ Validación para prevenir comparación de escenas idénticas (client-side y server-side)

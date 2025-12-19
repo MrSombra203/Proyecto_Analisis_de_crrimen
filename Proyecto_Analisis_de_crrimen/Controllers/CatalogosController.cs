@@ -3,20 +3,22 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Proyecto_Analisis_de_crimen.Models;
 using Proyecto_Analisis_de_crimen.Attributes;
+using Proyecto_Analisis_de_crimen.Services;
 
 namespace Proyecto_Analisis_de_crimen.Controllers
 {
     // Controlador para gestionar los catálogos del sistema (tipos de crimen y modus operandi)
     // Solo los administradores pueden acceder aquí
+    // Aplica DIP: Depende de interfaces, no de implementaciones concretas
     [RequireAdmin]
     public class CatalogosController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICatalogoService _catalogoService;
 
-        // Constructor con inyección de dependencias
-        public CatalogosController(ApplicationDbContext context)
+        // Constructor con inyección de dependencias (DIP)
+        public CatalogosController(ICatalogoService catalogoService)
         {
-            _context = context;
+            _catalogoService = catalogoService;
         }
 
         // ============================================
@@ -26,9 +28,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         // Muestra la lista de todos los tipos de crimen, ordenados alfabéticamente
         public async Task<IActionResult> TiposCrimen()
         {
-            var tipos = await _context.TiposCrimen
-                .OrderBy(t => t.Nombre)
-                .ToListAsync();
+            var tipos = (await _catalogoService.ObtenerTiposCrimenAsync()).OrderBy(t => t.Nombre);
             return View(tipos);
         }
 
@@ -44,17 +44,17 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CrearTipoCrimen(TipoCrimen tipoCrimen)
         {
+            // Validar unicidad
+            if (await _catalogoService.TipoCrimenExisteAsync(tipoCrimen.Nombre))
+            {
+                ModelState.AddModelError("Nombre", "Ya existe un tipo de crimen con este nombre");
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Le ponemos la fecha actual y lo activamos
-                    tipoCrimen.FechaCreacion = DateTime.Now;
-                    tipoCrimen.Activo = true;
-
-                    _context.TiposCrimen.Add(tipoCrimen);
-                    await _context.SaveChangesAsync();
-
+                    await _catalogoService.CrearTipoCrimenAsync(tipoCrimen);
                     TempData["Success"] = $"Tipo de crimen '{tipoCrimen.Nombre}' creado exitosamente";
                     return RedirectToAction(nameof(TiposCrimen));
                 }
@@ -74,7 +74,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         // Muestra el formulario de edición con los datos del tipo de crimen
         public async Task<IActionResult> EditarTipoCrimen(int id)
         {
-            var tipoCrimen = await _context.TiposCrimen.FindAsync(id);
+            var tipoCrimen = await _catalogoService.ObtenerTipoCrimenPorIdAsync(id);
             if (tipoCrimen == null)
             {
                 return NotFound();
@@ -93,13 +93,17 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 return NotFound();
             }
 
+            // Validar unicidad excluyendo el registro actual
+            if (await _catalogoService.TipoCrimenExisteAsync(tipoCrimen.Nombre, id))
+            {
+                ModelState.AddModelError("Nombre", "Ya existe un tipo de crimen con este nombre");
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(tipoCrimen);
-                    await _context.SaveChangesAsync();
-
+                    await _catalogoService.ActualizarTipoCrimenAsync(tipoCrimen);
                     TempData["Success"] = $"Tipo de crimen '{tipoCrimen.Nombre}' actualizado exitosamente";
                     return RedirectToAction(nameof(TiposCrimen));
                 }
@@ -122,18 +126,18 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DesactivarTipoCrimen(int id)
         {
-            var tipoCrimen = await _context.TiposCrimen.FindAsync(id);
+            var tipoCrimen = await _catalogoService.ObtenerTipoCrimenPorIdAsync(id);
             if (tipoCrimen == null)
             {
                 return NotFound();
             }
 
-            // Cambiamos el estado (si estaba activo, lo desactivamos y viceversa)
-            tipoCrimen.Activo = !tipoCrimen.Activo;
-            await _context.SaveChangesAsync();
-
-            string estado = tipoCrimen.Activo ? "activado" : "desactivado";
-            TempData["Success"] = $"Tipo de crimen '{tipoCrimen.Nombre}' {estado} exitosamente";
+            var exito = await _catalogoService.CambiarEstadoTipoCrimenAsync(id);
+            if (exito)
+            {
+                string estado = tipoCrimen.Activo ? "desactivado" : "activado";
+                TempData["Success"] = $"Tipo de crimen '{tipoCrimen.Nombre}' {estado} exitosamente";
+            }
             
             return RedirectToAction(nameof(TiposCrimen));
         }
@@ -145,9 +149,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         // Muestra la lista de todos los modus operandi, ordenados alfabéticamente
         public async Task<IActionResult> ModusOperandi()
         {
-            var modus = await _context.ModusOperandi
-                .OrderBy(m => m.Nombre)
-                .ToListAsync();
+            var modus = (await _catalogoService.ObtenerModusOperandiAsync()).OrderBy(m => m.Nombre);
             return View(modus);
         }
 
@@ -163,17 +165,17 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CrearModusOperandi(ModusOperandi modusOperandi)
         {
+            // Validar unicidad
+            if (await _catalogoService.ModusOperandiExisteAsync(modusOperandi.Nombre))
+            {
+                ModelState.AddModelError("Nombre", "Ya existe un modus operandi con este nombre");
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // Configurar valores por defecto
-                    modusOperandi.FechaCreacion = DateTime.Now;
-                    modusOperandi.Activo = true;
-
-                    _context.ModusOperandi.Add(modusOperandi);
-                    await _context.SaveChangesAsync();
-
+                    await _catalogoService.CrearModusOperandiAsync(modusOperandi);
                     TempData["Success"] = $"Modus operandi '{modusOperandi.Nombre}' creado exitosamente";
                     return RedirectToAction(nameof(ModusOperandi));
                 }
@@ -193,7 +195,7 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         // Muestra el formulario de edición con los datos del modus operandi
         public async Task<IActionResult> EditarModusOperandi(int id)
         {
-            var modusOperandi = await _context.ModusOperandi.FindAsync(id);
+            var modusOperandi = await _catalogoService.ObtenerModusOperandiPorIdAsync(id);
             if (modusOperandi == null)
             {
                 return NotFound();
@@ -212,13 +214,17 @@ namespace Proyecto_Analisis_de_crimen.Controllers
                 return NotFound();
             }
 
+            // Validar unicidad excluyendo el registro actual
+            if (await _catalogoService.ModusOperandiExisteAsync(modusOperandi.Nombre, id))
+            {
+                ModelState.AddModelError("Nombre", "Ya existe un modus operandi con este nombre");
+            }
+
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(modusOperandi);
-                    await _context.SaveChangesAsync();
-
+                    await _catalogoService.ActualizarModusOperandiAsync(modusOperandi);
                     TempData["Success"] = $"Modus operandi '{modusOperandi.Nombre}' actualizado exitosamente";
                     return RedirectToAction(nameof(ModusOperandi));
                 }
@@ -241,18 +247,18 @@ namespace Proyecto_Analisis_de_crimen.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DesactivarModusOperandi(int id)
         {
-            var modusOperandi = await _context.ModusOperandi.FindAsync(id);
+            var modusOperandi = await _catalogoService.ObtenerModusOperandiPorIdAsync(id);
             if (modusOperandi == null)
             {
                 return NotFound();
             }
 
-            // Cambiamos el estado (si estaba activo, lo desactivamos y viceversa)
-            modusOperandi.Activo = !modusOperandi.Activo;
-            await _context.SaveChangesAsync();
-
-            string estado = modusOperandi.Activo ? "activado" : "desactivado";
-            TempData["Success"] = $"Modus operandi '{modusOperandi.Nombre}' {estado} exitosamente";
+            var exito = await _catalogoService.CambiarEstadoModusOperandiAsync(id);
+            if (exito)
+            {
+                string estado = modusOperandi.Activo ? "desactivado" : "activado";
+                TempData["Success"] = $"Modus operandi '{modusOperandi.Nombre}' {estado} exitosamente";
+            }
             
             return RedirectToAction(nameof(ModusOperandi));
         }

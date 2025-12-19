@@ -7,19 +7,18 @@ namespace Proyecto_Analisis_de_crimen.Controllers
 {
     // Controlador para el login y logout de usuarios
     // Se encarga de autenticar usuarios y manejar sus sesiones
+    // Aplica DIP: Depende de interfaces, no de implementaciones concretas
     public class AuthController : Controller
     {
         // ID del rol de administrador (usado para redirecciones)
         private const int ROL_ADMINISTRADOR = 1;
 
-        private readonly AuthenticationService _authService;
-        private readonly ApplicationDbContext _context;
+        private readonly IAuthenticationService _authService;
 
-        // El constructor recibe los servicios que necesita mediante inyección de dependencias
-        public AuthController(AuthenticationService authService, ApplicationDbContext context)
+        // El constructor recibe los servicios que necesita mediante inyección de dependencias (DIP)
+        public AuthController(IAuthenticationService authService)
         {
             _authService = authService;
-            _context = context;
         }
 
         // Muestra la página de login

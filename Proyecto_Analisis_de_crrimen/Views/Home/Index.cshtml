@@ -15,15 +15,15 @@
                 }
                 @if (userId.HasValue)
                 {
-                    @Html.ActionLink("REGISTRAR ESCENA", "Registrar", "EscenaCrimen", null, new { @class = "btn btn-hero-primary" })
+                    <a href="@Url.Action("Registrar", "EscenaCrimen")" class="btn-uiverse">REGISTRAR ESCENA</a>
                     @if (isAdmin)
                     {
-                        @Html.ActionLink("VER DASHBOARD", "Dashboard", "EscenaCrimen", null, new { @class = "btn btn-hero-secondary" })
+                        <a href="@Url.Action("Dashboard", "EscenaCrimen")" class="btn-uiverse" style="background-color: transparent !important; border: 2px solid white !important; color: white !important;">VER DASHBOARD</a>
                     }
                 }
                 else
                 {
-                    @Html.ActionLink("INICIAR SESIÓN", "Login", "Auth", null, new { @class = "btn btn-hero-primary" })
+                    <a href="@Url.Action("Login", "Auth")" class="btn-uiverse">INICIAR SESIÓN</a>
                 }
             </div>
         </div>
@@ -43,21 +43,21 @@
                     <div class="feature-icon">📝</div>
                     <h3>Registro de Escenas</h3>
                     <p>Captura detallada de información de escenas del crimen con datos estructurados y estandarizados.</p>
-                    @Html.ActionLink("REGISTRAR", "Registrar", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+                    <a href="@Url.Action("Registrar", "EscenaCrimen")" class="btn-uiverse">REGISTRAR</a>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon">🔍</div>
                     <h3>Comparación Automática</h3>
                     <p>Algoritmos avanzados que detectan similitudes entre escenas basándose en múltiples criterios.</p>
-                    @Html.ActionLink("COMPARAR", "Comparar", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+                    <a href="@Url.Action("Comparar", "EscenaCrimen")" class="btn-uiverse">COMPARAR</a>
                 </div>
 
                 <div class="feature-card">
                     <div class="feature-icon">📊</div>
                     <h3>Análisis de Patrones</h3>
                     <p>Identificación de crímenes en serie mediante análisis estadístico y detección de tendencias.</p>
-                    @Html.ActionLink("VER ANÁLISIS", "Index", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+                    <a href="@Url.Action("Index", "EscenaCrimen")" class="btn-uiverse">VER ANÁLISIS</a>
                 </div>
 
                 @if (isAdminHome)
@@ -66,7 +66,7 @@
                         <div class="feature-icon">📈</div>
                         <h3>Dashboard Estadístico</h3>
                         <p>Visualización en tiempo real de métricas operacionales y alertas del sistema.</p>
-                        @Html.ActionLink("DASHBOARD", "Dashboard", "EscenaCrimen", null, new { @class = "btn btn-feature" })
+                        <a href="@Url.Action("Dashboard", "EscenaCrimen")" class="btn-uiverse">DASHBOARD</a>
                     </div>
                 }
             }
@@ -76,7 +76,7 @@
                     <div class="feature-icon">🔒</div>
                     <h3>Acceso Requerido</h3>
                     <p>Para utilizar las funcionalidades del sistema, debe iniciar sesión con sus credenciales.</p>
-                    @Html.ActionLink("INICIAR SESIÓN", "Login", "Auth", null, new { @class = "btn btn-feature" })
+                    <a href="@Url.Action("Login", "Auth")" class="btn-uiverse">INICIAR SESIÓN</a>
                 </div>
 
                 <div class="feature-card">

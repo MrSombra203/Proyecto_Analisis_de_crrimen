@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Proyecto_Analisis_de_crimen.Models;
 using Proyecto_Analisis_de_crimen.Services;
+using Proyecto_Analisis_de_crimen.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,9 +37,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }
 });
 
-// SERVICIOS PERSONALIZADOS
-builder.Services.AddScoped<ComparacionService>();
-builder.Services.AddScoped<Proyecto_Analisis_de_crimen.Services.AuthenticationService>();
+// REPOSITORIOS Y UNIT OF WORK (Repository Pattern, Unit of Work Pattern)
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// SERVICIOS PERSONALIZADOS (DIP - Dependency Inversion Principle)
+// Registramos las interfaces y sus implementaciones
+builder.Services.AddScoped<IComparacionService, ComparacionService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IEscenaCrimenService, EscenaCrimenService>();
+builder.Services.AddScoped<ICatalogoService, CatalogoService>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 
 // SESIONES HTTP: Para mantener estado de autenticación entre peticiones
 builder.Services.AddSession(options =>
