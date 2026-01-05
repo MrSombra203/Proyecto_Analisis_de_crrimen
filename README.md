@@ -184,6 +184,74 @@ El proyecto sigue el patrón **MVC (Model-View-Controller)** con una arquitectur
 
 ### Patrones Arquitectónicos Implementados
 
+#### Strategy Pattern
+
+El proyecto implementa el **Strategy Pattern** para permitir diferentes algoritmos de comparación:
+
+- **`IComparacionStrategy`**: Interfaz base que define el contrato para estrategias de comparación
+  - Método principal: `CompararEscenas(EscenaCrimen, EscenaCrimen)`
+  - Propiedad: `Nombre` para identificación de la estrategia
+  - Aplica **OCP (Open/Closed Principle)**: Permite agregar nuevas estrategias sin modificar código existente
+
+- **`ComparacionEstandarStrategy`**: Implementación estándar del algoritmo multi-criterio original
+  - Evalúa 6 criterios con pesos específicos (Tipo de Crimen: 25, Modus Operandi: 25, Área: 20, etc.)
+  - Usa coeficiente de Jaccard para comparación de evidencias
+  - Aplica **SRP**: Responsabilidad única de comparación estándar
+
+- **`ComparacionGeograficaStrategy`**: Implementación alternativa enfocada en aspectos geográficos y temporales
+  - Prioriza Área Geográfica (40 puntos) y Horario (25 puntos)
+  - Reduce peso de otros criterios para análisis geográfico
+  - Demuestra extensibilidad del sistema sin modificar código base
+
+**Beneficios:**
+- **Extensibilidad**: Agregar nuevas estrategias sin modificar código existente
+- **Flexibilidad**: Cambiar algoritmo de comparación según necesidad
+- **Mantenibilidad**: Cada estrategia es independiente y fácil de mantener
+- **Testabilidad**: Fácil probar cada estrategia por separado
+
+#### Factory Pattern
+
+El proyecto implementa el **Factory Pattern** para centralizar la creación de estrategias:
+
+- **`IComparacionStrategyFactory`**: Interfaz que define métodos para crear estrategias
+  - `CrearEstrategia(TipoComparacionStrategy)`: Crea estrategia según tipo
+  - `ObtenerEstrategiaPorDefecto()`: Retorna estrategia estándar
+  - `ObtenerTodasLasEstrategias()`: Lista todas las estrategias disponibles
+
+- **`ComparacionStrategyFactory`**: Implementación que centraliza la creación
+  - Mantiene diccionario de estrategias disponibles
+  - Singleton por instancia para reutilización
+  - Aplica **SRP**: Responsabilidad única de crear estrategias
+
+**Beneficios:**
+- **Desacoplamiento**: Cliente no conoce detalles de creación
+- **Centralización**: Un solo punto para crear estrategias
+- **Extensibilidad**: Fácil agregar nuevas estrategias al factory
+
+#### Decorator Pattern
+
+El proyecto implementa el **Decorator Pattern** para agregar funcionalidades transversales:
+
+- **`IComparacionServiceDecorator`**: Interfaz base que extiende `IComparacionService`
+  - Expone `ServicioBase` para composición
+  - Permite decoradores anidados
+
+- **`LoggingComparacionServiceDecorator`**: Agrega logging a todas las operaciones
+  - Registra inicio y fin de comparaciones
+  - Logs de errores con información detallada
+  - Aplica **SRP**: Responsabilidad única de logging
+
+- **`ValidacionComparacionServiceDecorator`**: Agrega validaciones adicionales
+  - Valida parámetros antes de procesar
+  - Validaciones de integridad de datos
+  - Aplica **SRP**: Responsabilidad única de validación
+
+**Beneficios:**
+- **Extensibilidad**: Agregar funcionalidades sin modificar código base (OCP)
+- **Composición**: Decoradores pueden combinarse (logging + validación)
+- **Separación de Concerns**: Cada decorador tiene una responsabilidad única
+- **Flexibilidad**: Activar/desactivar funcionalidades según necesidad
+
 #### Repository Pattern
 
 El proyecto implementa el **Repository Pattern** para abstraer el acceso a datos y aplicar principios SOLID:
@@ -225,17 +293,31 @@ El proyecto implementa **Unit of Work Pattern** para coordinar múltiples reposi
 - **Mantenibilidad**: Cambios en acceso a datos se aíslan en la capa de repositorios
 - **Transaccionalidad**: Unit of Work permite operaciones atómicas entre múltiples repositorios
 - **Reutilización**: Código genérico reduce duplicación
+- **Extensibilidad**: Nuevos algoritmos y funcionalidades sin modificar código existente
 
 ### Componentes Principales
 
 - **Controllers**: Manejan las peticiones HTTP y coordinan entre vistas y servicios. Aplican **DIP** dependiendo de interfaces de servicios y `IUnitOfWork`.
 - **Services**: Contienen la lógica de negocio:
-  - `ComparacionService`: Algoritmo core de comparación de escenas
+  - `ComparacionService`: Algoritmo core de comparación de escenas (usa Strategy Pattern)
   - `EscenaCrimenService`: Gestión de escenas de crímenes
   - `CatalogoService`: Gestión de catálogos (TiposCrimen, ModusOperandi)
   - `UsuarioService`: Gestión de usuarios y roles
   - `AuthenticationService`: Autenticación y validación de credenciales
   - Todos usan `IUnitOfWork` para acceso a datos y aplican **SRP**.
+- **Strategies** (Strategy Pattern): Algoritmos de comparación intercambiables:
+  - `IComparacionStrategy`: Interfaz base para estrategias de comparación
+  - `ComparacionEstandarStrategy`: Algoritmo multi-criterio estándar
+  - `ComparacionGeograficaStrategy`: Algoritmo enfocado en geografía y tiempo
+  - Aplican **OCP**: Extensibles sin modificar código existente
+- **Factories** (Factory Pattern): Creación centralizada de objetos:
+  - `IComparacionStrategyFactory`: Interfaz del factory
+  - `ComparacionStrategyFactory`: Crea estrategias según tipo
+  - Aplican **DIP**: Dependen de abstracciones
+- **Decorators** (Decorator Pattern): Funcionalidades transversales:
+  - `LoggingComparacionServiceDecorator`: Agrega logging a operaciones
+  - `ValidacionComparacionServiceDecorator`: Agrega validaciones adicionales
+  - Aplican **OCP**: Extensibles sin modificar código base
 - **Repositories**: Abstraen el acceso a datos usando Repository Pattern y Unit of Work Pattern:
   - `IRepository<T>` / `Repository<T>`: Repositorio genérico para cualquier entidad
   - `IEscenaCrimenRepository` / `EscenaCrimenRepository`: Repositorio específico con operaciones optimizadas
@@ -352,12 +434,22 @@ Proyecto_Analisis_de_crrimen/
 │   └── ApplicationDbContext.cs      # Contexto de EF Core
 │
 ├── Services/                 # Servicios de negocio (capa de lógica)
-│   ├── ComparacionService.cs        # CORE: Algoritmo de comparación
+│   ├── ComparacionService.cs        # CORE: Algoritmo de comparación (usa Strategy Pattern)
 │   ├── EscenaCrimenService.cs       # Gestión de escenas de crimen
 │   ├── CatalogoService.cs           # Gestión de catálogos (TiposCrimen, ModusOperandi)
 │   ├── UsuarioService.cs            # Gestión de usuarios
 │   ├── AuthenticationService.cs     # Servicio de autenticación
-│   └── Interfaces/                  # Interfaces de servicios (IComparacionService, etc.)
+│   ├── Strategies/                   # Estrategias de comparación (Strategy Pattern)
+│   │   ├── IComparacionStrategy.cs           # Interfaz base para estrategias
+│   │   ├── ComparacionEstandarStrategy.cs    # Estrategia estándar multi-criterio
+│   │   └── ComparacionGeograficaStrategy.cs  # Estrategia enfocada en geografía
+│   ├── Factories/                    # Factories para creación de objetos (Factory Pattern)
+│   │   ├── IComparacionStrategyFactory.cs   # Interfaz del factory
+│   │   └── ComparacionStrategyFactory.cs    # Factory de estrategias
+│   └── Decorators/                   # Decoradores para funcionalidades transversales (Decorator Pattern)
+│       ├── IComparacionServiceDecorator.cs          # Interfaz base para decoradores
+│       ├── LoggingComparacionServiceDecorator.cs   # Decorador de logging
+│       └── ValidacionComparacionServiceDecorator.cs # Decorador de validación
 │
 ├── Repositories/             # Repositorios (capa de acceso a datos)
 │   ├── IRepository.cs               # Interfaz genérica del repositorio
@@ -789,6 +881,79 @@ El sistema implementa un **esquema de colores consistente** en toda la aplicaci�
 
 ##  Mejoras Técnicas Implementadas
 
+### Principios SOLID Aplicados
+
+El proyecto implementa los principios SOLID de manera exhaustiva:
+
+1. **SRP (Single Responsibility Principle)**
+   - Cada servicio tiene una responsabilidad única y bien definida
+   - `ComparacionService`: Solo comparación de escenas
+   - `EscenaCrimenService`: Solo gestión de escenas
+   - `AuthenticationService`: Solo autenticación
+   - Cada estrategia de comparación tiene una única responsabilidad
+
+2. **OCP (Open/Closed Principle)**
+   - **Strategy Pattern**: Permite agregar nuevas estrategias de comparación sin modificar código existente
+   - `IComparacionStrategy` define el contrato, nuevas implementaciones se agregan fácilmente
+   - `ComparacionEstandarStrategy` y `ComparacionGeograficaStrategy` son extensibles
+   - El sistema está abierto para extensión pero cerrado para modificación
+
+3. **LSP (Liskov Substitution Principle)**
+   - Todas las estrategias implementan `IComparacionStrategy` y son intercambiables
+   - Los decoradores implementan `IComparacionService` y pueden sustituir al servicio base
+
+4. **ISP (Interface Segregation Principle)**
+   - Interfaces específicas y segregadas (`IEscenaCrimenRepository` extiende `IRepository<EscenaCrimen>`)
+   - Interfaces de servicios separadas por responsabilidad
+   - No se fuerza a las clases a implementar métodos que no necesitan
+
+5. **DIP (Dependency Inversion Principle)**
+   - Dependencia de abstracciones (`IComparacionService`, `IComparacionStrategyFactory`, `IUnitOfWork`)
+   - `ComparacionService` depende de `IComparacionStrategyFactory`, no de implementaciones concretas
+   - Inyección de dependencias en todos los componentes
+
+### Patrones de Diseño Implementados
+
+1. **Strategy Pattern**
+   - **Propósito**: Permitir cambiar el algoritmo de comparación en tiempo de ejecución
+   - **Implementación**: 
+     - `IComparacionStrategy`: Interfaz base para estrategias
+     - `ComparacionEstandarStrategy`: Algoritmo multi-criterio original
+     - `ComparacionGeograficaStrategy`: Algoritmo enfocado en geografía y tiempo
+   - **Beneficios**: 
+     - Extensibilidad sin modificar código existente (OCP)
+     - Fácil agregar nuevas estrategias de comparación
+     - Separación de algoritmos de comparación
+
+2. **Factory Pattern**
+   - **Propósito**: Centralizar la creación de estrategias de comparación
+   - **Implementación**: 
+     - `IComparacionStrategyFactory`: Interfaz del factory
+     - `ComparacionStrategyFactory`: Implementación que crea estrategias según tipo
+   - **Beneficios**: 
+     - Desacoplamiento de la creación de objetos
+     - Fácil agregar nuevas estrategias al factory
+     - Control centralizado de la creación de estrategias
+
+3. **Decorator Pattern**
+   - **Propósito**: Agregar funcionalidades transversales sin modificar la clase base
+   - **Implementación**: 
+     - `IComparacionServiceDecorator`: Interfaz base para decoradores
+     - `LoggingComparacionServiceDecorator`: Agrega logging a todas las operaciones
+     - `ValidacionComparacionServiceDecorator`: Agrega validaciones adicionales
+   - **Beneficios**: 
+     - Funcionalidades transversales (logging, validación) sin modificar código base
+     - Composición flexible de funcionalidades
+     - Cumple con OCP: extensible sin modificar
+
+4. **Repository Pattern** (Ya implementado)
+   - Abstracción completa del acceso a datos
+   - Repositorios genéricos y específicos
+
+5. **Unit of Work Pattern** (Ya implementado)
+   - Coordinación de múltiples repositorios
+   - Manejo de transacciones
+
 ### Optimizaciones del Algoritmo Core
 
 1. **Constantes para Configuración**
@@ -809,6 +974,7 @@ El sistema implementa un **esquema de colores consistente** en toda la aplicaci�
    - Validación de parámetros nulos en todos los métodos públicos
    - Verificación de escenas idénticas con retorno apropiado
    - Validación de rangos para umbrales
+   - Decorador de validación agrega validaciones adicionales sin modificar código base
 
 ### Mejoras de Seguridad
 
@@ -846,18 +1012,24 @@ El sistema implementa un **esquema de colores consistente** en toda la aplicaci�
    - Métodos auxiliares privados para evitar duplicación
    - Código más mantenible y legible
 
-3. **Arquitectura con Repository Pattern y Unit of Work**
+3. **Arquitectura con Múltiples Patrones de Diseño**
    - **Repository Pattern**: Abstracción completa del acceso a datos mediante `IRepository<T>` y repositorios específicos
    - **Unit of Work Pattern**: Coordinación de múltiples repositorios mediante `IUnitOfWork` para operaciones transaccionales
+   - **Strategy Pattern**: Algoritmos de comparación intercambiables mediante `IComparacionStrategy`
+   - **Factory Pattern**: Creación centralizada de estrategias mediante `IComparacionStrategyFactory`
+   - **Decorator Pattern**: Funcionalidades transversales (logging, validación) mediante decoradores
    - **Lazy Initialization**: Los repositorios en `UnitOfWork` se instancian solo cuando se acceden por primera vez
    - **Eager Loading Optimizado**: `EscenaCrimenRepository` utiliza `Include()` para cargar relaciones en una sola consulta
    - **Desacoplamiento**: Los servicios no dependen directamente de Entity Framework, solo de interfaces
    - **Testabilidad**: Arquitectura permite fácil creación de mocks para pruebas unitarias
    - **Mantenibilidad**: Cambios en acceso a datos se aíslan en la capa de repositorios
+   - **Extensibilidad**: Nuevos algoritmos y funcionalidades sin modificar código existente (OCP)
 
 4. **Configuración de Inyección de Dependencias**
    - Todos los servicios registrados en `Program.cs` con `AddScoped` (una instancia por request HTTP)
    - `IUnitOfWork` registrado como servicio scoped para coordinar repositorios dentro del mismo request
+   - `IComparacionStrategyFactory` registrado como Singleton para reutilización de estrategias
+   - Decoradores aplicados en cascada: Validación → Logging → ComparacionService base
    - Interfaces e implementaciones registradas siguiendo DIP (Dependency Inversion Principle)
    - Entity Framework configurado con retry on failure para mayor resiliencia
    - Sesiones HTTP configuradas con seguridad (HttpOnly, SecurePolicy)
@@ -957,7 +1129,15 @@ Este proyecto demuestra:
 
 - **Arquitectura MVC** en ASP.NET Core con separación en capas
 - **Repository Pattern y Unit of Work Pattern** para abstracción de acceso a datos
-- **Principios SOLID** aplicados en toda la arquitectura (SRP, DIP, ISP, OCP)
+- **Strategy Pattern** para algoritmos intercambiables y extensibles
+- **Factory Pattern** para creación centralizada de objetos
+- **Decorator Pattern** para funcionalidades transversales
+- **Principios SOLID** aplicados exhaustivamente en toda la arquitectura:
+  - **SRP**: Cada clase tiene una única responsabilidad
+  - **OCP**: Sistema extensible sin modificar código existente
+  - **LSP**: Sustituibilidad de implementaciones
+  - **ISP**: Interfaces segregadas y específicas
+  - **DIP**: Dependencia de abstracciones, no de implementaciones concretas
 - **Inyección de Dependencias** con ASP.NET Core DI Container
 - **Entity Framework Core** para acceso a datos con eager loading optimizado
 - **Algoritmos de comparación** y análisis de patrones (coeficiente de Jaccard)
@@ -965,13 +1145,39 @@ Este proyecto demuestra:
 - **Gestión de catálogos** y datos maestros con activación/desactivación
 - **Optimización de consultas** con índices compuestos y consultas eficientes
 - **Validaciones** multi-capa (front-end, back-end, BD)
+- **Composición de funcionalidades** mediante decoradores
+- **Extensibilidad** mediante estrategias y factories
 
 ---
 
 ---
 
-**Versión**: 2.0  
+**Versión**: 3.0  
 **Última actualización**: Diciembre 2024
+
+### Changelog v3.0
+
+- ✅ **Strategy Pattern**: Implementación de algoritmos de comparación intercambiables
+  - `IComparacionStrategy` como interfaz base
+  - `ComparacionEstandarStrategy`: Algoritmo multi-criterio original
+  - `ComparacionGeograficaStrategy`: Algoritmo enfocado en geografía y tiempo
+  - Extensibilidad sin modificar código existente (OCP)
+- ✅ **Factory Pattern**: Creación centralizada de estrategias
+  - `IComparacionStrategyFactory` y `ComparacionStrategyFactory`
+  - Desacoplamiento de la creación de objetos
+- ✅ **Decorator Pattern**: Funcionalidades transversales
+  - `LoggingComparacionServiceDecorator`: Agrega logging a todas las operaciones
+  - `ValidacionComparacionServiceDecorator`: Agrega validaciones adicionales
+  - Composición flexible de funcionalidades
+- ✅ **Refactorización de ComparacionService**: Ahora usa Strategy Pattern
+  - Delega comparación a estrategias configurables
+  - Mantiene compatibilidad con código existente
+- ✅ **Principios SOLID aplicados exhaustivamente**:
+  - **OCP**: Sistema extensible mediante estrategias y decoradores
+  - **DIP**: Dependencia de abstracciones en todos los componentes
+  - **SRP**: Cada clase tiene una única responsabilidad bien definida
+  - **ISP**: Interfaces segregadas y específicas
+  - **LSP**: Sustituibilidad de implementaciones
 
 ### Changelog v2.0
 

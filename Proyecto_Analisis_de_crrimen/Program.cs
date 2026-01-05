@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Proyecto_Analisis_de_crimen.Models;
 using Proyecto_Analisis_de_crimen.Services;
 using Proyecto_Analisis_de_crimen.Repositories;
+using Proyecto_Analisis_de_crimen.Services.Factories;
+using Proyecto_Analisis_de_crimen.Services.Decorators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,9 +42,31 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // REPOSITORIOS Y UNIT OF WORK (Repository Pattern, Unit of Work Pattern)
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+// FACTORY PATTERN: Factory para crear estrategias de comparación
+builder.Services.AddSingleton<IComparacionStrategyFactory, ComparacionStrategyFactory>();
+
 // SERVICIOS PERSONALIZADOS (DIP - Dependency Inversion Principle)
 // Registramos las interfaces y sus implementaciones
-builder.Services.AddScoped<IComparacionService, ComparacionService>();
+
+// ComparacionService con Strategy Pattern
+// Primero registramos la implementación base
+builder.Services.AddScoped<ComparacionService>();
+
+// Luego aplicamos decoradores (Decorator Pattern)
+// Orden: Validacion -> Logging -> ComparacionService base
+builder.Services.AddScoped<IComparacionService>(serviceProvider =>
+{
+    var comparacionService = serviceProvider.GetRequiredService<ComparacionService>();
+    var logger = serviceProvider.GetRequiredService<ILogger<LoggingComparacionServiceDecorator>>();
+    
+    // Aplicar decoradores en cascada
+    var conValidacion = new ValidacionComparacionServiceDecorator(comparacionService);
+    var conLogging = new LoggingComparacionServiceDecorator(conValidacion, logger);
+    
+    return conLogging;
+});
+
+// Otros servicios
 builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<IEscenaCrimenService, EscenaCrimenService>();
 builder.Services.AddScoped<ICatalogoService, CatalogoService>();
